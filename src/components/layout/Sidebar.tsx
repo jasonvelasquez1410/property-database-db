@@ -6,17 +6,25 @@ interface SidebarProps {
     user: User;
     activePage: Page;
     setActivePage: (page: Page) => void;
+    isOpen: boolean;
+    onClose: () => void;
 }
 
-const NavItem = ({ icon, label, page, activePage, setActivePage, disabled = false }: { icon: any, label: string, page: Page, activePage: Page, setActivePage: (page: Page) => void, disabled?: boolean }) => {
+const NavItem = ({ icon, label, page, activePage, setActivePage, disabled = false, onClose }: { icon: any, label: string, page: Page, activePage: Page, setActivePage: (page: Page) => void, disabled?: boolean, onClose: () => void }) => {
     const isActive = activePage === page;
+    const handleClick = () => {
+        if (!disabled) {
+            setActivePage(page);
+            onClose(); // Close sidebar on mobile when item clicked
+        }
+    }
     return (
         <button
-            onClick={() => !disabled && setActivePage(page)}
+            onClick={handleClick}
             disabled={disabled}
             className={`w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-lg transition-colors ${isActive
-                    ? 'bg-blue-600 text-white shadow'
-                    : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
+                ? 'bg-blue-600 text-white shadow'
+                : 'text-gray-600 hover:bg-gray-200 hover:text-gray-900'
                 } ${disabled ? 'text-gray-400 cursor-not-allowed' : ''}`}
         >
             <Icon type={icon} className="w-6 h-6" />
@@ -25,42 +33,64 @@ const NavItem = ({ icon, label, page, activePage, setActivePage, disabled = fals
     );
 };
 
-export const Sidebar = ({ user, activePage, setActivePage }: SidebarProps) => {
+export const Sidebar = ({ user, activePage, setActivePage, isOpen, onClose }: SidebarProps) => {
     return (
-        <aside className="w-64 bg-white flex-shrink-0 flex flex-col border-r shadow-lg z-10">
-            <div className="flex items-center gap-3 h-16 border-b px-6">
-                <img src="/svm-logo.jpg" alt="SVM Logo" className="h-10 w-10 object-cover rounded-full" />
-                <span className="font-bold text-lg tracking-wider text-gray-800">SVMPROPERTIES</span>
-            </div>
+        <>
+            {/* Mobile Overlay */}
+            {isOpen && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+                    onClick={onClose}
+                />
+            )}
 
-            <div className="p-4 flex-grow">
-                <nav className="space-y-2">
-                    <NavItem icon="dashboard" label="Dashboard" page="dashboard" activePage={activePage} setActivePage={setActivePage} />
-                    <NavItem icon="properties" label="Properties" page="properties" activePage={activePage} setActivePage={setActivePage} />
-                    <NavItem icon="document-text" label="Documents" page="documents" activePage={activePage} setActivePage={setActivePage} />
-                    <NavItem icon="finance" label="Finance" page="finance" activePage={activePage} setActivePage={setActivePage} />
-                </nav>
-                <div className="my-4 border-t"></div>
-                <nav className="space-y-2">
-                    <NavItem icon="settings" label="Settings" page="settings" activePage={activePage} setActivePage={setActivePage} />
-                    <NavItem icon="help" label="Help" page="help" activePage={activePage} setActivePage={setActivePage} />
-                    {user.role === 'admin' && (
-                        <NavItem icon="admin" label="Admin" page="admin" activePage={activePage} setActivePage={setActivePage} />
-                    )}
-                </nav>
-            </div>
-            <div className="p-4 border-t">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">
-                        {user.name.charAt(0)}
+            {/* Sidebar */}
+            <aside className={`
+                fixed md:static inset-y-0 left-0 z-30
+                w-64 bg-white flex flex-col border-r shadow-lg
+                transform transition-transform duration-300 ease-in-out
+                ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+                md:translate-x-0
+            `}>
+                <div className="flex items-center justify-between h-16 border-b px-6">
+                    <div className="flex items-center gap-3">
+                        <img src="/svm-logo.jpg" alt="SVM Logo" className="h-10 w-10 object-cover rounded-full" />
+                        <span className="font-bold text-lg tracking-wider text-gray-800">SVMPROPERTIES</span>
                     </div>
-                    <div>
-                        <p className="font-semibold text-sm text-gray-900">{user.name}</p>
-                        <p className="text-xs text-gray-500 capitalize">{user.role}</p>
-                    </div>
-                    <Icon type="chevron-up" className="w-5 h-5 ml-auto text-gray-500" />
+                    {/* Close button for mobile */}
+                    <button onClick={onClose} className="md:hidden text-gray-500 hover:text-gray-700">
+                        <Icon type="close" className="w-6 h-6" />
+                    </button>
                 </div>
-            </div>
-        </aside>
+
+                <div className="p-4 flex-grow overflow-y-auto">
+                    <nav className="space-y-2">
+                        <NavItem icon="dashboard" label="Dashboard" page="dashboard" activePage={activePage} setActivePage={setActivePage} onClose={onClose} />
+                        <NavItem icon="properties" label="Properties" page="properties" activePage={activePage} setActivePage={setActivePage} onClose={onClose} />
+                        <NavItem icon="document-text" label="Documents" page="documents" activePage={activePage} setActivePage={setActivePage} onClose={onClose} />
+                        <NavItem icon="finance" label="Finance" page="finance" activePage={activePage} setActivePage={setActivePage} onClose={onClose} />
+                    </nav>
+                    <div className="my-4 border-t"></div>
+                    <nav className="space-y-2">
+                        <NavItem icon="settings" label="Settings" page="settings" activePage={activePage} setActivePage={setActivePage} onClose={onClose} />
+                        <NavItem icon="help" label="Help" page="help" activePage={activePage} setActivePage={setActivePage} onClose={onClose} />
+                        {user.role === 'admin' && (
+                            <NavItem icon="admin" label="Admin" page="admin" activePage={activePage} setActivePage={setActivePage} onClose={onClose} />
+                        )}
+                    </nav>
+                </div>
+                <div className="p-4 border-t bg-gray-50">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 font-bold">
+                            {user.name.charAt(0)}
+                        </div>
+                        <div className="overflow-hidden">
+                            <p className="font-semibold text-sm text-gray-900 truncate">{user.name}</p>
+                            <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </>
     );
 };

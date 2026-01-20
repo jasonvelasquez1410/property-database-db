@@ -10,6 +10,7 @@ import { DocumentsPage } from './components/DocumentsPage';
 import { FinancePage } from './components/FinancePage';
 
 
+import { Icon } from './components/shared/Icon';
 import { SettingsPage } from './components/SettingsPage';
 
 // Placeholder pages for navigation demonstration
@@ -27,6 +28,7 @@ const AdminPage = () => <PlaceholderPage title="Admin" />;
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [activePage, setActivePage] = useState<Page>('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleLoginSuccess = (loggedInUser: User) => {
     setUser(loggedInUser);
@@ -56,8 +58,27 @@ function App() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar user={user} activePage={activePage} setActivePage={setActivePage} />
+      <Sidebar
+        user={user}
+        activePage={activePage}
+        setActivePage={setActivePage}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+      />
       <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Mobile Header */}
+        <div className="md:hidden bg-white border-b p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setIsSidebarOpen(true)} className="text-gray-500 hover:text-gray-700">
+              <Icon type="more-horizontal" className="w-6 h-6" />
+            </button>
+            <span className="font-bold text-lg text-gray-800">SVMPROPERTIES</span>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 font-bold text-sm">
+            {user.name.charAt(0)}
+          </div>
+        </div>
+
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
           {renderPage()}
         </main>

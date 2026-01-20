@@ -5,10 +5,10 @@ import { Icon } from './shared/Icon';
 import { DocumentLink } from './shared/DocumentLink';
 
 interface PropertyDetailModalProps {
-  property: Property | null;
-  user: User;
-  onClose: () => void;
-  onEdit: (property: Property) => void;
+    property: Property | null;
+    user: User;
+    onClose: () => void;
+    onEdit: (property: Property) => void;
 }
 
 const DetailSection = ({ title, children }: { title: string, children?: React.ReactNode }) => (
@@ -38,90 +38,91 @@ const formatDate = (dateString?: string) => {
 }
 
 export const PropertyDetailModal = ({ property, user, onClose, onEdit }: PropertyDetailModalProps) => {
-  const [activeTab, setActiveTab] = useState('overview');
+    const [activeTab, setActiveTab] = useState('overview');
 
-  if (!property) return null;
+    if (!property) return null;
 
-  const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'financials', label: 'Financials' },
-    { id: 'legal', label: 'Legal & Docs' },
-    { id: 'operations', label: 'Operations' },
-    { id: 'valuation', label: 'Valuation' },
-  ];
+    const tabs = [
+        { id: 'overview', label: 'Overview' },
+        { id: 'financials', label: 'Financials' },
+        { id: 'legal', label: 'Legal & Docs' },
+        { id: 'operations', label: 'Operations' },
+        { id: 'valuation', label: 'Valuation' },
+    ];
 
-  const handleEditClick = () => {
-      onEdit(property);
-  };
+    const handleEditClick = () => {
+        onEdit(property);
+    };
 
-  const renderContent = () => {
-    switch (activeTab) {
-        case 'overview': return <OverviewTab property={property} />;
-        case 'financials': return <FinancialsTab property={property} />;
-        case 'legal': return <LegalTab property={property} />;
-        case 'operations': return <OperationsTab property={property} />;
-        case 'valuation': return <ValuationTab property={property} />;
-        default: return null;
-    }
-  };
+    const renderContent = () => {
+        switch (activeTab) {
+            case 'overview': return <OverviewTab property={property} />;
+            case 'financials': return <FinancialsTab property={property} />;
+            case 'legal': return <LegalTab property={property} />;
+            case 'operations': return <OperationsTab property={property} />;
+            case 'valuation': return <ValuationTab property={property} />;
+            default: return null;
+        }
+    };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={onClose}>
-      <div className="bg-gray-50 rounded-xl shadow-2xl w-full max-w-6xl h-full max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
-        <header className="p-4 sm:p-6 border-b bg-gray-800 text-white rounded-t-xl flex justify-between items-start gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-white">{property.propertyName}</h2>
-            <p className="text-sm text-gray-300">{property.propertyType} in {property.location}</p>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {user.role === 'admin' && (
-                 <button onClick={handleEditClick} className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold bg-yellow-500 text-black rounded-md hover:bg-yellow-400 transition-colors">
-                    <Icon type="edit" className="w-4 h-4" />
-                    <span>Edit</span>
-                </button>
-            )}
-            <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-700 hover:text-white transition-colors">
-              <Icon type="close" className="w-6 h-6" />
-            </button>
-          </div>
-        </header>
-        
-        <div className="flex flex-col md:flex-row flex-grow min-h-0">
-          <div className="w-full md:w-1/3 xl:w-2/5 p-4 sm:p-6 border-b md:border-b-0 md:border-r bg-white">
-            <img src={property.photoUrl} alt={property.propertyName} className="w-full h-64 object-cover rounded-lg shadow-md mb-6" />
-             <div className="space-y-3 text-sm">
-                <DetailItem label="Full Address" value={property.fullAddress} />
-                <DetailItem label="Area" value={`${property.areaSqm.toLocaleString()} sqm`} />
-                <DetailItem label="Lot/Blk/Unit No." value={property.lotNo} />
-                <DetailItem label="TCT/CCT No." value={property.tctOrCctNo} />
-             </div>
-          </div>
-          <main className="w-full md:w-2/3 xl:w-3/5 flex flex-col min-h-0">
-            <nav className="border-b border-gray-200 px-4 sm:px-6 bg-white">
-              <div className="-mb-px flex space-x-6" aria-label="Tabs">
-                {tabs.map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                      activeTab === tab.id
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-            </nav>
-            <div className="flex-grow overflow-y-auto p-4 sm:p-6">
-              {renderContent()}
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={onClose}>
+            <div className="bg-gray-50 rounded-xl shadow-2xl w-full max-w-6xl h-full max-h-[90vh] flex flex-col overflow-hidden" onClick={e => e.stopPropagation()}>
+                <header className="p-4 sm:p-6 border-b bg-gray-800 text-white rounded-t-xl flex justify-between items-start gap-4">
+                    <div>
+                        <h2 className="text-2xl font-bold text-white">{property.propertyName}</h2>
+                        <p className="text-sm text-gray-300">{property.propertyType} in {property.location}</p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        {user.role === 'admin' && (
+                            <button onClick={handleEditClick} className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold bg-yellow-500 text-black rounded-md hover:bg-yellow-400 transition-colors">
+                                <Icon type="edit" className="w-4 h-4" />
+                                <span>Edit</span>
+                            </button>
+                        )}
+                        <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-700 hover:text-white transition-colors">
+                            <Icon type="close" className="w-6 h-6" />
+                        </button>
+                    </div>
+                </header>
+
+                <div className="flex flex-col md:flex-row flex-grow min-h-0">
+                    <div className="w-full md:w-1/3 xl:w-2/5 p-4 sm:p-6 border-b md:border-b-0 md:border-r bg-white">
+                        <img src={property.photoUrl} alt={property.propertyName} className="w-full h-64 object-cover rounded-lg shadow-md mb-6" />
+                        <div className="space-y-3 text-sm">
+                            <DetailItem label="Full Address" value={property.fullAddress} />
+                            <DetailItem label="Unit No." value={property.unitNumber} />
+                            <DetailItem label="Floor No." value={property.floorNumber} />
+                            <DetailItem label="Area" value={`${property.areaSqm.toLocaleString()} sqm`} />
+                            <DetailItem label="Lot/Blk No." value={property.lotNo} />
+                            <DetailItem label="TCT/CCT No." value={property.tctOrCctNo} />
+                        </div>
+                    </div>
+                    <main className="w-full md:w-2/3 xl:w-3/5 flex flex-col min-h-0">
+                        <nav className="border-b border-gray-200 px-4 sm:px-6 bg-white">
+                            <div className="-mb-px flex space-x-6" aria-label="Tabs">
+                                {tabs.map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                                                ? 'border-blue-500 text-blue-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            }`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </nav>
+                        <div className="flex-grow overflow-y-auto p-4 sm:p-6">
+                            {renderContent()}
+                        </div>
+                    </main>
+                </div>
             </div>
-          </main>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 
@@ -150,7 +151,7 @@ const FinancialsTab = ({ property }: { property: Property }) => (
             <DetailItem label="Unit / Lot Cost" value={formatCurrency(property.acquisition.unitLotCost)} />
             <DetailItem label="Cost / Sqm" value={formatCurrency(property.acquisition.costPerSqm)} />
             <DetailItem label="Fit Out Cost" value={formatCurrency(property.acquisition.fitOutCost)} />
-            <DetailItem label="Total Acquisition Cost" value={formatCurrency(property.acquisition.totalCost)} className="font-bold"/>
+            <DetailItem label="Total Acquisition Cost" value={formatCurrency(property.acquisition.totalCost)} className="font-bold" />
         </DetailSection>
         <DetailSection title="Payment Status">
             <DetailItem label="Manner of Payment" value={property.payment.status} />
@@ -177,7 +178,7 @@ const LegalTab = ({ property }: { property: Property }) => (
                 </div>
             ))}
             <div className="col-span-full mt-2">
-                 <DetailItem label="Pending Documents" value={property.documentation.pendingDocuments.length > 0 ? property.documentation.pendingDocuments.join(', ') : 'None'} />
+                <DetailItem label="Pending Documents" value={property.documentation.pendingDocuments.length > 0 ? property.documentation.pendingDocuments.join(', ') : 'None'} />
             </div>
         </DetailSection>
         <DetailSection title="Possession / Turnover">
@@ -191,50 +192,50 @@ const LegalTab = ({ property }: { property: Property }) => (
 const OperationsTab = ({ property }: { property: Property }) => {
     const { lease, insurance, management } = property;
     return (
-    <div>
-        {lease && (
-            <DetailSection title="Lease Information">
-                <DetailItem label="Lessee" value={lease.lessee} />
-                <DetailItem label="Lease Date" value={formatDate(lease.leaseDate)} />
-                <DetailItem label="Lease Rate" value={`${formatCurrency(lease.leaseRate)} / month`} />
-                <DetailItem label="Term" value={`${lease.termInYears} years`} />
-                <DetailItem label="Referring Broker" value={lease.referringBroker} />
-                <DetailItem label="Broker Contact" value={lease.brokerContact} />
-                <div className="col-span-full mt-2">
-                    <DocumentLink label="View Lease Contract" href={lease.contractUrl} />
-                </div>
-            </DetailSection>
-        )}
-        {insurance && (
-             <DetailSection title="Insurance Data">
-                <DetailItem label="Date of Coverage" value={formatDate(insurance.coverageDate)} />
-                <DetailItem label="Amount Insured" value={formatCurrency(insurance.amountInsured)} />
-                <DetailItem label="Insurance Company" value={insurance.insuranceCompany} />
-                 <div className="col-span-full mt-2">
-                    <DocumentLink label="View Policy" href={insurance.policyUrl} />
-                </div>
-            </DetailSection>
-        )}
-        <DetailSection title="Property Management">
-            <DetailItem label="Caretaker" value={management.caretakerName} />
-            <DetailItem label="Rate per Month" value={formatCurrency(management.caretakerRatePerMonth)} />
-            <div className="col-span-full my-2 border-t"></div>
-            <div className="bg-gray-100 p-3 rounded-lg col-span-full sm:col-span-1">
-                <p className="font-bold text-gray-800">Real Estate Taxes</p>
-                <DetailItem label="Last Paid" value={formatDate(management.realEstateTaxes.lastPaidDate)} />
-                <DetailItem label="Amount Paid" value={formatCurrency(management.realEstateTaxes.amountPaid)} />
-                <div className="mt-2"><DocumentLink label="View Receipt" href={management.realEstateTaxes.receiptUrl} /></div>
-            </div>
-            {management.condoDues && (
-                <div className="bg-gray-100 p-3 rounded-lg col-span-full sm:col-span-1">
-                    <p className="font-bold text-gray-800">Condo Dues</p>
-                    <DetailItem label="Last Paid" value={formatDate(management.condoDues.lastPaidDate)} />
-                    <DetailItem label="Amount Paid" value={formatCurrency(management.condoDues.amountPaid)} />
-                    <div className="mt-2"><DocumentLink label="View Receipt" href={management.condoDues.receiptUrl} /></div>
-                </div>
+        <div>
+            {lease && (
+                <DetailSection title="Lease Information">
+                    <DetailItem label="Lessee" value={lease.lessee} />
+                    <DetailItem label="Lease Date" value={formatDate(lease.leaseDate)} />
+                    <DetailItem label="Lease Rate" value={`${formatCurrency(lease.leaseRate)} / month`} />
+                    <DetailItem label="Term" value={`${lease.termInYears} years`} />
+                    <DetailItem label="Referring Broker" value={lease.referringBroker} />
+                    <DetailItem label="Broker Contact" value={lease.brokerContact} />
+                    <div className="col-span-full mt-2">
+                        <DocumentLink label="View Lease Contract" href={lease.contractUrl} />
+                    </div>
+                </DetailSection>
             )}
-        </DetailSection>
-    </div>
+            {insurance && (
+                <DetailSection title="Insurance Data">
+                    <DetailItem label="Date of Coverage" value={formatDate(insurance.coverageDate)} />
+                    <DetailItem label="Amount Insured" value={formatCurrency(insurance.amountInsured)} />
+                    <DetailItem label="Insurance Company" value={insurance.insuranceCompany} />
+                    <div className="col-span-full mt-2">
+                        <DocumentLink label="View Policy" href={insurance.policyUrl} />
+                    </div>
+                </DetailSection>
+            )}
+            <DetailSection title="Property Management">
+                <DetailItem label="Caretaker" value={management.caretakerName} />
+                <DetailItem label="Rate per Month" value={formatCurrency(management.caretakerRatePerMonth)} />
+                <div className="col-span-full my-2 border-t"></div>
+                <div className="bg-gray-100 p-3 rounded-lg col-span-full sm:col-span-1">
+                    <p className="font-bold text-gray-800">Real Estate Taxes</p>
+                    <DetailItem label="Last Paid" value={formatDate(management.realEstateTaxes.lastPaidDate)} />
+                    <DetailItem label="Amount Paid" value={formatCurrency(management.realEstateTaxes.amountPaid)} />
+                    <div className="mt-2"><DocumentLink label="View Receipt" href={management.realEstateTaxes.receiptUrl} /></div>
+                </div>
+                {management.condoDues && (
+                    <div className="bg-gray-100 p-3 rounded-lg col-span-full sm:col-span-1">
+                        <p className="font-bold text-gray-800">Condo Dues</p>
+                        <DetailItem label="Last Paid" value={formatDate(management.condoDues.lastPaidDate)} />
+                        <DetailItem label="Amount Paid" value={formatCurrency(management.condoDues.amountPaid)} />
+                        <div className="mt-2"><DocumentLink label="View Receipt" href={management.condoDues.receiptUrl} /></div>
+                    </div>
+                )}
+            </DetailSection>
+        </div>
     )
 };
 
@@ -242,25 +243,25 @@ const ValuationTab = ({ property }: { property: Property }) => (
     <div>
         <DetailSection title="Appraisal History">
             <div className="col-span-full space-y-4">
-            {property.appraisals.length > 0 ? property.appraisals.sort((a,b) => new Date(b.appraisalDate).getTime() - new Date(a.appraisalDate).getTime()).map((appraisal, index) => (
-                <div key={index} className="p-4 border rounded-lg bg-white grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
-                    <div>
-                        <p className="font-semibold text-gray-500">Appraisal Date</p>
-                        <p className="text-gray-900">{formatDate(appraisal.appraisalDate)}</p>
+                {property.appraisals.length > 0 ? property.appraisals.sort((a, b) => new Date(b.appraisalDate).getTime() - new Date(a.appraisalDate).getTime()).map((appraisal, index) => (
+                    <div key={index} className="p-4 border rounded-lg bg-white grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+                        <div>
+                            <p className="font-semibold text-gray-500">Appraisal Date</p>
+                            <p className="text-gray-900">{formatDate(appraisal.appraisalDate)}</p>
+                        </div>
+                        <div>
+                            <p className="font-semibold text-gray-500">Appraised Value</p>
+                            <p className="text-gray-900 font-bold">{formatCurrency(appraisal.appraisedValue)}</p>
+                        </div>
+                        <div>
+                            <p className="font-semibold text-gray-500">Appraisal Company</p>
+                            <p className="text-gray-900">{appraisal.appraisalCompany}</p>
+                        </div>
+                        <div className="sm:col-span-3 mt-2">
+                            <DocumentLink label="View Appraisal Report" href={appraisal.reportUrl} />
+                        </div>
                     </div>
-                     <div>
-                        <p className="font-semibold text-gray-500">Appraised Value</p>
-                        <p className="text-gray-900 font-bold">{formatCurrency(appraisal.appraisedValue)}</p>
-                    </div>
-                    <div>
-                        <p className="font-semibold text-gray-500">Appraisal Company</p>
-                        <p className="text-gray-900">{appraisal.appraisalCompany}</p>
-                    </div>
-                    <div className="sm:col-span-3 mt-2">
-                        <DocumentLink label="View Appraisal Report" href={appraisal.reportUrl} />
-                    </div>
-                </div>
-            )) : <p>No appraisal history found.</p>}
+                )) : <p>No appraisal history found.</p>}
             </div>
         </DetailSection>
     </div>

@@ -17,21 +17,28 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onSelect }
       </div>
       <div className="p-4 flex-grow flex flex-col">
         <h3 className="text-lg font-bold text-gray-900 truncate">{property.propertyName}</h3>
-        <div className="flex items-center text-sm text-gray-600 mt-1 mb-3">
-            <Icon type="location" className="w-4 h-4 mr-1.5 text-gray-400" />
-            <span>{property.location}</span>
+        <div className="flex items-center text-sm text-gray-600 mt-1 mb-1">
+          <Icon type="location" className="w-4 h-4 mr-1.5 text-gray-400" />
+          <span>{property.location}</span>
         </div>
+        {(property.unitNumber || property.floorNumber) && (
+          <div className="text-sm font-medium text-blue-600 mb-3 ml-0.5">
+            {property.unitNumber && `Unit ${property.unitNumber}`}
+            {property.unitNumber && property.floorNumber && ' • '}
+            {property.floorNumber}
+          </div>
+        )}
         <div className="flex-grow">
           <p className="text-xs text-gray-500 line-clamp-2">{property.fullAddress}</p>
         </div>
         <div className="mt-4 border-t pt-3 flex justify-between items-center text-sm">
-            <p className="text-gray-700">Area: <span className="font-semibold">{property.areaSqm.toLocaleString()} sqm</span></p>
-            <button
-                onClick={() => onSelect(property)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-            >
-                View Details
-            </button>
+          <p className="text-gray-700">Area: <span className="font-semibold">{property.areaSqm.toLocaleString()} sqm</span></p>
+          <button
+            onClick={() => onSelect(property)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          >
+            View Details
+          </button>
         </div>
       </div>
     </div>

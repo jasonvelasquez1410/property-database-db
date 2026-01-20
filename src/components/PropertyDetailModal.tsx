@@ -87,8 +87,8 @@ export const PropertyDetailModal = ({ property, user, onClose, onEdit }: Propert
                 </header>
 
                 <div className="flex flex-col md:flex-row flex-grow min-h-0">
-                    <div className="w-full md:w-1/3 xl:w-2/5 p-4 sm:p-6 border-b md:border-b-0 md:border-r bg-white">
-                        <img src={property.photoUrl} alt={property.propertyName} className="w-full h-64 object-cover rounded-lg shadow-md mb-6" />
+                    <div className="w-full md:w-1/3 xl:w-2/5 p-4 sm:p-6 border-b md:border-b-0 md:border-r bg-white overflow-y-auto">
+                        <img src={property.photoUrl} alt={property.propertyName} className="w-full h-48 object-cover rounded-lg shadow-md mb-6" />
                         <div className="space-y-3 text-sm">
                             <DetailItem label="Full Address" value={property.fullAddress} />
                             <DetailItem label="Unit No." value={property.unitNumber} />

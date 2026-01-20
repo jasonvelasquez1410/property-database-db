@@ -2,6 +2,13 @@
 import { User, Property, PropertyType, Location, PaymentStatus, RecentActivity, Documentation, Appraisal } from '../types';
 import { supabase } from './supabaseClient';
 
+// Mock user database
+const MOCK_USERS: (User & { password_not_hashed: string })[] = [
+  { id: 'user-1', email: 'demo@email.com', password_not_hashed: 'demo123', name: 'Demo Admin', role: 'admin' },
+  { id: 'user-2', email: 'manager@email.com', password_not_hashed: 'manager123', name: 'Jane Switch', role: 'manager' },
+  { id: 'user-3', email: 'staff@email.com', password_not_hashed: 'staff123', name: 'Peter Staff', role: 'staff' },
+];
+
 // Helper to map DB row to Property object
 const mapRowToProperty = (row: any): Property => {
   return {

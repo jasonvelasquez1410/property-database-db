@@ -19,6 +19,10 @@ export const FinancePage = ({ user }: FinancePageProps) => {
     const [properties, setProperties] = useState<Property[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const [searchTerm, setSearchTerm] = useState('');
+    const [regionFilter, setRegionFilter] = useState('');
+    const [propertyTypeFilter, setPropertyTypeFilter] = useState('');
+
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
@@ -34,15 +38,27 @@ export const FinancePage = ({ user }: FinancePageProps) => {
         loadData();
     }, []);
 
+    const filteredProperties = useMemo(() => {
+        return properties.filter(p => {
+            const matchesSearch = p.propertyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                p.fullAddress.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesRegion = regionFilter ? p.location.toLowerCase().includes(regionFilter.toLowerCase()) : true;
+            const matchesType = propertyTypeFilter ? p.propertyType.toLowerCase().includes(propertyTypeFilter.toLowerCase()) : true;
+
+            return matchesSearch && matchesRegion && matchesType;
+        });
+    }, [properties, searchTerm, regionFilter, propertyTypeFilter]);
+
     const handleExportReport = () => {
-        // Generate CSV content
-        const headers = ['Property Name', 'Type', 'Acquisition Cost', 'Market Value', 'Payment Status', 'Last Updated'];
-        const rows = properties.map(p => {
+        // Generate CSV content from FILTERED properties
+        const headers = ['Property Name', 'Type', 'Location', 'Acquisition Cost', 'Market Value', 'Payment Status', 'Last Updated'];
+        const rows = filteredProperties.map(p => {
             const latestAppraisal = p.appraisals.sort((a, b) => new Date(b.appraisalDate).getTime() - new Date(a.appraisalDate).getTime())[0];
             const marketValue = latestAppraisal?.appraisedValue || p.acquisition.totalCost;
             return [
                 `"${p.propertyName}"`,
                 p.propertyType,
+                p.location,
                 p.acquisition.totalCost,
                 marketValue,
                 p.payment.status,
@@ -62,7 +78,7 @@ export const FinancePage = ({ user }: FinancePageProps) => {
         link.click();
         document.body.removeChild(link);
 
-        alert("Financial Report exported successfully!");
+        alert(`Financial Report exported successfully! (${filteredProperties.length} records)`);
     };
 
     const scrollToSection = (id: string) => {
@@ -73,8 +89,9 @@ export const FinancePage = ({ user }: FinancePageProps) => {
     };
 
     const financialSummary = useMemo(() => {
-        const totalAcquisitionCost = properties.reduce((sum, p) => sum + p.acquisition.totalCost, 0);
-        const totalMarketValue = properties.reduce((sum, p) => {
+        const dataToUse = filteredProperties; // Use filtered data
+        const totalAcquisitionCost = dataToUse.reduce((sum, p) => sum + p.acquisition.totalCost, 0);
+        const totalMarketValue = dataToUse.reduce((sum, p) => {
             const latestAppraisal = p.appraisals.sort((a, b) => new Date(b.appraisalDate).getTime() - new Date(a.appraisalDate).getTime())[0];
             return sum + (latestAppraisal?.appraisedValue || p.acquisition.totalCost);
         }, 0);
@@ -82,47 +99,47 @@ export const FinancePage = ({ user }: FinancePageProps) => {
         const thirtyDaysFromNow = new Date();
         thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
-        const upcomingDueDates = properties.flatMap(p => p.documentation.docs)
+        const upcomingDueDates = dataToUse.flatMap(p => p.documentation.docs)
             .filter(doc => doc.dueDate && new Date(doc.dueDate) <= thirtyDaysFromNow && new Date(doc.dueDate) >= new Date())
             .length;
 
-        const previousMarketValue = properties.reduce((sum, p) => {
+        const previousMarketValue = dataToUse.reduce((sum, p) => {
             const appraisals = p.appraisals.sort((a, b) => new Date(b.appraisalDate).getTime() - new Date(a.appraisalDate).getTime());
             // Use second to last appraisal, or acquisition cost if not available
             return sum + (appraisals[1]?.appraisedValue || p.acquisition.totalCost);
         }, 0);
 
-        const valueChangePercentage = totalMarketValue > 0 ? ((totalMarketValue - previousMarketValue) / previousMarketValue) * 100 : 0;
+        const valueChangePercentage = previousMarketValue > 0 ? ((totalMarketValue - previousMarketValue) / previousMarketValue) * 100 : 0;
 
         return {
             totalAcquisitionCost,
             totalMarketValue,
-            outstandingPayments: 31360000, // This remains mocked as the data model doesn't support it
+            outstandingPayments: dataToUse.length > 0 ? 31360000 * (dataToUse.length / properties.length) : 0, // Pro-rated mock data
             upcomingDueDates,
             valueChangePercentage
         };
-    }, [properties]);
+    }, [filteredProperties, properties.length]);
 
     const chartData = useMemo(() => {
-        const costDistribution = properties.reduce((acc, p) => {
+        const dataToUse = filteredProperties; // Use filtered data
+        const costDistribution = dataToUse.reduce((acc, p) => {
             acc[p.propertyType] = (acc[p.propertyType] || 0) + p.acquisition.totalCost;
             return acc;
         }, {} as Record<PropertyType, number>);
 
-        const paymentStatus = properties.reduce((acc, p) => {
+        const paymentStatus = dataToUse.reduce((acc, p) => {
             acc[p.payment.status] = (acc[p.payment.status] || 0) + 1;
             return acc;
         }, {} as Record<PaymentStatus, number>);
 
-        const allAppraisals = properties.flatMap(p => p.appraisals.map(a => ({ ...a, propertyId: p.id, acquisitionCost: p.acquisition.totalCost })));
         const trendData: Record<string, number> = {};
-        if (properties.length > 0) {
+        if (dataToUse.length > 0) {
             for (let i = 5; i >= 0; i--) {
                 const date = new Date();
                 date.setMonth(date.getMonth() - i);
                 const monthKey = date.toLocaleString('default', { month: 'short', year: 'numeric' });
 
-                const monthValue = properties.reduce((sum, p) => {
+                const monthValue = dataToUse.reduce((sum, p) => {
                     const latestAppraisalForMonth = p.appraisals
                         .filter(a => new Date(a.appraisalDate) <= date)
                         .sort((a, b) => new Date(b.appraisalDate).getTime() - new Date(a.appraisalDate).getTime())[0];
@@ -159,7 +176,7 @@ export const FinancePage = ({ user }: FinancePageProps) => {
                 }]
             }
         };
-    }, [properties]);
+    }, [filteredProperties]);
 
     if (loading) {
         return <div className="p-8 text-center">Loading financial data...</div>;
@@ -177,8 +194,8 @@ export const FinancePage = ({ user }: FinancePageProps) => {
                     title="Total Acquisition Cost"
                     value={formatCurrency(financialSummary.totalAcquisitionCost)}
                     description="Total invested capital"
-                    trend="+2.5%"
-                    trendDirection="up"
+                    trend={`${financialSummary.valueChangePercentage >= 0 ? '+' : ''}${financialSummary.valueChangePercentage.toFixed(1)}%`}
+                    trendDirection={financialSummary.valueChangePercentage >= 0 ? 'up' : 'down'}
                     icon="dollar-circle"
                     onClick={() => scrollToSection('cost-chart')}
                 />
@@ -186,8 +203,8 @@ export const FinancePage = ({ user }: FinancePageProps) => {
                     title="Current Market Value"
                     value={formatCurrency(financialSummary.totalMarketValue)}
                     description="Current valuation"
-                    trend={`+${financialSummary.valueChangePercentage.toFixed(1)}%`}
-                    trendDirection="up"
+                    trend={`${financialSummary.valueChangePercentage >= 0 ? '+' : ''}${financialSummary.valueChangePercentage.toFixed(1)}%`}
+                    trendDirection={financialSummary.valueChangePercentage >= 0 ? 'up' : 'down'}
                     icon="chart-pie"
                     onClick={() => scrollToSection('value-trend-chart')}
                 />
@@ -212,10 +229,15 @@ export const FinancePage = ({ user }: FinancePageProps) => {
             </div>
 
             <div className="bg-white rounded-xl shadow p-4 space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center flex-wrap gap-4">
                     <h3 className="font-bold text-lg">Financial Filters</h3>
                     <div className="flex items-center gap-2">
-                        <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium border bg-white rounded-md hover:bg-gray-50">Bulk Update</button>
+                        <button
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium border bg-white rounded-md hover:bg-gray-50"
+                            onClick={() => { setSearchTerm(''); setRegionFilter(''); setPropertyTypeFilter(''); }}
+                        >
+                            Clear Filters
+                        </button>
                         <button
                             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium border bg-white rounded-md hover:bg-gray-50"
                             onClick={handleExportReport}
@@ -224,11 +246,42 @@ export const FinancePage = ({ user }: FinancePageProps) => {
                         </button>
                     </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <input type="text" placeholder="Search properties..." className="w-full border-gray-300 rounded-md" />
-                    <input type="text" placeholder="Region" className="w-full border-gray-300 rounded-md" />
-                    <input type="text" placeholder="Due Date Range" className="w-full border-gray-300 rounded-md" />
-                    <input type="text" placeholder="Property Type" className="w-full border-gray-300 rounded-md" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Icon type="properties" className="h-4 w-4 text-gray-400" />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Search properties..."
+                            className="pl-10 w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <select
+                        className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        value={regionFilter}
+                        onChange={(e) => setRegionFilter(e.target.value)}
+                    >
+                        <option value="">All Regions</option>
+                        <option value="Luzon">Luzon</option>
+                        <option value="Visayas">Visayas</option>
+                        <option value="Mindanao">Mindanao</option>
+                    </select>
+
+                    <select
+                        className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        value={propertyTypeFilter}
+                        onChange={(e) => setPropertyTypeFilter(e.target.value)}
+                    >
+                        <option value="">All Property Types</option>
+                        <option value="Condominium">Condominium</option>
+                        <option value="Commercial">Commercial</option>
+                        <option value="Land">Land</option>
+                        <option value="House">House</option>
+                    </select>
                 </div>
             </div>
 

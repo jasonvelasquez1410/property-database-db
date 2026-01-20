@@ -393,8 +393,6 @@ export const api = {
     window.location.reload();
   },
 
-},
-
   // --- Tenant & Lease Management ---
 
   fetchTenants: async (): Promise<Tenant[]> => {
@@ -410,138 +408,138 @@ export const api = {
     return data as Tenant[];
   },
 
-    addTenant: async (tenant: Omit<Tenant, 'id'>): Promise<Tenant> => {
-      const { data, error } = await supabase
-        .from('tenants')
-        .insert([tenant])
-        .select()
-        .single();
+  addTenant: async (tenant: Omit<Tenant, 'id'>): Promise<Tenant> => {
+    const { data, error } = await supabase
+      .from('tenants')
+      .insert([tenant])
+      .select()
+      .single();
 
-      if (error) throw error;
-      return data as Tenant;
-    },
+    if (error) throw error;
+    return data as Tenant;
+  },
 
-      fetchLeases: async (): Promise<Lease[]> => {
-        const { data, error } = await supabase
-          .from('leases')
-          .select('*')
-          .order('created_at', { ascending: false });
+  fetchLeases: async (): Promise<Lease[]> => {
+    const { data, error } = await supabase
+      .from('leases')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-        if (error) return [];
-        return data as Lease[];
-      },
+    if (error) return [];
+    return data as Lease[];
+  },
 
-        addLease: async (lease: Omit<Lease, 'id'>): Promise<Lease> => {
-          // Ensure numeric values are numbers
-          const payload = {
-            ...lease,
-            monthly_rent: lease.monthlyRent,
-            security_deposit: lease.securityDeposit,
-            property_id: lease.propertyId,
-            tenant_id: lease.tenantId,
-            start_date: lease.startDate,
-            end_date: lease.endDate,
-            contract_url: lease.contractUrl
-          };
+  addLease: async (lease: Omit<Lease, 'id'>): Promise<Lease> => {
+    // Ensure numeric values are numbers
+    const payload = {
+      ...lease,
+      monthly_rent: lease.monthlyRent,
+      security_deposit: lease.securityDeposit,
+      property_id: lease.propertyId,
+      tenant_id: lease.tenantId,
+      start_date: lease.startDate,
+      end_date: lease.endDate,
+      contract_url: lease.contractUrl
+    };
 
-          // We need to map back to snake_case for Supabase if we didn't use the JS client's auto-mapping (which we might not have set up)
-          // Actually, standard supabase client matches JSON keys if table columns match. 
-          // But my table columns are snake_case (`monthly_rent`) and my types are camelCase (`monthlyRent`).
-          // I need to map them manually unless I have a global converter. 
-          // Based on `mapPropertyToRow`, I am doing manual mapping.
+    // We need to map back to snake_case for Supabase if we didn't use the JS client's auto-mapping (which we might not have set up)
+    // Actually, standard supabase client matches JSON keys if table columns match. 
+    // But my table columns are snake_case (`monthly_rent`) and my types are camelCase (`monthlyRent`).
+    // I need to map them manually unless I have a global converter. 
+    // Based on `mapPropertyToRow`, I am doing manual mapping.
 
-          const dbLease = {
-            property_id: lease.propertyId,
-            tenant_id: lease.tenantId,
-            start_date: lease.startDate,
-            end_date: lease.endDate,
-            monthly_rent: lease.monthlyRent,
-            security_deposit: lease.securityDeposit,
-            status: lease.status,
-            terms: lease.terms,
-            contract_url: lease.contractUrl
-          };
+    const dbLease = {
+      property_id: lease.propertyId,
+      tenant_id: lease.tenantId,
+      start_date: lease.startDate,
+      end_date: lease.endDate,
+      monthly_rent: lease.monthlyRent,
+      security_deposit: lease.securityDeposit,
+      status: lease.status,
+      terms: lease.terms,
+      contract_url: lease.contractUrl
+    };
 
-          const { data, error } = await supabase
-            .from('leases')
-            .insert([dbLease])
-            .select()
-            .single();
+    const { data, error } = await supabase
+      .from('leases')
+      .insert([dbLease])
+      .select()
+      .single();
 
-          if (error) throw error;
+    if (error) throw error;
 
-          // Map back to camelCase for frontend
-          return {
-            id: data.id,
-            propertyId: data.property_id,
-            tenantId: data.tenant_id,
-            startDate: data.start_date,
-            endDate: data.end_date,
-            monthlyRent: data.monthly_rent,
-            securityDeposit: data.security_deposit,
-            status: data.status,
-            terms: data.terms,
-            contractUrl: data.contract_url
-          };
-        },
+    // Map back to camelCase for frontend
+    return {
+      id: data.id,
+      propertyId: data.property_id,
+      tenantId: data.tenant_id,
+      startDate: data.start_date,
+      endDate: data.end_date,
+      monthlyRent: data.monthly_rent,
+      securityDeposit: data.security_deposit,
+      status: data.status,
+      terms: data.terms,
+      contractUrl: data.contract_url
+    };
+  },
 
-          fetchPayments: async (): Promise<PaymentRecord[]> => {
-            const { data, error } = await supabase
-              .from('payments')
-              .select('*')
-              .order('payment_date', { ascending: false });
+  fetchPayments: async (): Promise<PaymentRecord[]> => {
+    const { data, error } = await supabase
+      .from('payments')
+      .select('*')
+      .order('payment_date', { ascending: false });
 
-            if (error) return [];
+    if (error) return [];
 
-            return data.map((p: any) => ({
-              id: p.id,
-              leaseId: p.lease_id,
-              paymentDate: p.payment_date,
-              amount: p.amount,
-              paymentType: p.payment_type,
-              paymentMethod: p.payment_method,
-              referenceNo: p.reference_no,
-              status: p.status,
-              remarks: p.remarks
-            }));
-          },
+    return data.map((p: any) => ({
+      id: p.id,
+      leaseId: p.lease_id,
+      paymentDate: p.payment_date,
+      amount: p.amount,
+      paymentType: p.payment_type,
+      paymentMethod: p.payment_method,
+      referenceNo: p.reference_no,
+      status: p.status,
+      remarks: p.remarks
+    }));
+  },
 
-            addPayment: async (payment: Omit<PaymentRecord, 'id'>): Promise<PaymentRecord> => {
-              const dbPayment = {
-                lease_id: payment.leaseId,
-                payment_date: payment.paymentDate,
-                amount: payment.amount,
-                payment_type: payment.paymentType,
-                payment_method: payment.paymentMethod,
-                reference_no: payment.referenceNo,
-                status: payment.status,
-                remarks: payment.remarks
-              };
+  addPayment: async (payment: Omit<PaymentRecord, 'id'>): Promise<PaymentRecord> => {
+    const dbPayment = {
+      lease_id: payment.leaseId,
+      payment_date: payment.paymentDate,
+      amount: payment.amount,
+      payment_type: payment.paymentType,
+      payment_method: payment.paymentMethod,
+      reference_no: payment.referenceNo,
+      status: payment.status,
+      remarks: payment.remarks
+    };
 
-              const { data, error } = await supabase
-                .from('payments')
-                .insert([dbPayment])
-                .select()
-                .single();
+    const { data, error } = await supabase
+      .from('payments')
+      .insert([dbPayment])
+      .select()
+      .single();
 
-              if (error) throw error;
+    if (error) throw error;
 
-              return {
-                id: data.id,
-                leaseId: data.lease_id,
-                paymentDate: data.payment_date,
-                amount: data.amount,
-                paymentType: data.payment_type,
-                paymentMethod: data.payment_method,
-                referenceNo: data.reference_no,
-                status: data.status,
-                remarks: data.remarks
-              };
-            },
+    return {
+      id: data.id,
+      leaseId: data.lease_id,
+      paymentDate: data.payment_date,
+      amount: data.amount,
+      paymentType: data.payment_type,
+      paymentMethod: data.payment_method,
+      referenceNo: data.reference_no,
+      status: data.status,
+      remarks: data.remarks
+    };
+  },
 
-              clearAllData: async () => {
-                // Clears user's view for now, or deletes from DB?
-                // Safety: maybe just reload
-                window.location.reload();
-              }
+  clearAllData: async () => {
+    // Clears user's view for now, or deletes from DB?
+    // Safety: maybe just reload
+    window.location.reload();
+  }
 };

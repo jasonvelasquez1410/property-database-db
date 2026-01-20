@@ -22,6 +22,7 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
     const [newTenant, setNewTenant] = useState<Partial<Tenant>>({ status: 'Active' });
     const [newLease, setNewLease] = useState<Partial<Lease>>({ status: 'Active', monthlyRent: 0, securityDeposit: 0 });
     const [newPayment, setNewPayment] = useState<Partial<PaymentRecord>>({ status: 'Completed', amount: 0, paymentDate: new Date().toISOString().split('T')[0] });
+    const [autoGeneratePDCs, setAutoGeneratePDCs] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -76,8 +77,45 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
             const pName = properties.find(p => p.id === added.propertyId)?.propertyName;
 
             setLeases([{ ...added, tenantName: tName, propertyName: pName }, ...leases]);
+
+            // Handle PDC Generation
+            if (autoGeneratePDCs && newLease.startDate && newLease.endDate && newLease.monthlyRent) {
+                const start = new Date(newLease.startDate);
+                const end = new Date(newLease.endDate);
+                const pdcsToCreate: Partial<PaymentRecord>[] = [];
+
+                let current = new Date(start);
+                // Move to next month for the first payment if rent is paid in advance? 
+                // Usually first payment is immediate. Let's assume start date is first payment.
+
+                while (current <= end) {
+                    pdcsToCreate.push({
+                        leaseId: added.id,
+                        paymentDate: current.toISOString().split('T')[0],
+                        amount: newLease.monthlyRent,
+                        paymentType: 'Rent',
+                        paymentMethod: 'Check', // Default to Check for PDCs
+                        status: 'Pending',
+                        remarks: 'PDC - Waiting for deposit'
+                    });
+                    // Increment month
+                    current.setMonth(current.getMonth() + 1);
+                }
+
+                // Add all to database (in parallel for speed)
+                const paymentPromises = pdcsToCreate.map(p => api.addPayment(p));
+                const createdPayments = await Promise.all(paymentPromises);
+
+                // Update local state
+                setPayments(prev => [...createdPayments, ...prev]); // Add new ones to top/list
+                alert(`Successfully created Lease and generated ${createdPayments.length} pending payment records.`);
+            } else {
+                alert("Lease created successfully.");
+            }
+
             setIsAddLeaseOpen(false);
             setNewLease({ status: 'Active', monthlyRent: 0, securityDeposit: 0 });
+            setAutoGeneratePDCs(false); // Reset checkbox
         } catch (error) {
             console.error(error);
             alert("Failed to add lease");
@@ -297,11 +335,24 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
                                                             {lease.status}
                                                         </span>
                                                     </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        {lease.contractUrl && (
+                                                            <a
+                                                                href={lease.contractUrl}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-blue-600 hover:text-blue-900 flex items-center justify-end gap-1"
+                                                            >
+                                                                <Icon type="document-text" className="w-4 h-4" />
+                                                                View Contract
+                                                            </a>
+                                                        )}
+                                                    </td>
                                                 </tr>
                                             ))}
                                             {leases.length === 0 && (
                                                 <tr>
-                                                    <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
+                                                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
                                                         No active leases found. Create one to link a tenant to a property.
                                                     </td>
                                                 </tr>
@@ -408,17 +459,51 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Phone</label>
+                                    <label className="block text-sm font-medium text-gray-700">Security Deposit</label>
                                     <input
-                                        type="tel"
+                                        type="number"
                                         className="mt-1 w-full border border-gray-300 rounded-md p-2"
-                                        value={newTenant.phone || ''}
-                                        onChange={e => setNewTenant({ ...newTenant, phone: e.target.value })}
+                                        value={newLease.securityDeposit}
+                                        onChange={e => setNewLease({ ...newLease, securityDeposit: Number(e.target.value) })}
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Occupation</label>
+                                <label className="block text-sm font-medium text-gray-700">Upload Contract (PDF/Image)</label>
+                                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                                    <div className="space-y-1 text-center">
+                                        <Icon type="document-text" className="mx-auto h-12 w-12 text-gray-400" />
+                                        <div className="flex text-sm text-gray-600">
+                                            <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                                <span>Upload a file</span>
+                                                <input
+                                                    id="file-upload"
+                                                    name="file-upload"
+                                                    type="file"
+                                                    className="sr-only"
+                                                    onChange={(e) => {
+                                                        // Mock upload: Create a fake URL for the selected file
+                                                        if (e.target.files && e.target.files[0]) {
+                                                            const file = e.target.files[0];
+                                                            const fakeUrl = URL.createObjectURL(file);
+                                                            setNewLease({ ...newLease, contractUrl: fakeUrl });
+                                                            alert(`File "${file.name}" ready to upload.`);
+                                                        }
+                                                    }}
+                                                />
+                                            </label>
+                                            <p className="pl-1">or drag and drop</p>
+                                        </div>
+                                        <p className="text-xs text-gray-500">PDF, PNG, JPG up to 10MB</p>
+                                        {newLease.contractUrl && (
+                                            <p className="text-xs text-green-600 font-semibold mt-2">
+                                                File selected (Ready to submit)
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex justify-end gap-3 mt-6">                             <label className="block text-sm font-medium text-gray-700">Occupation</label>
                                 <input
                                     type="text"
                                     className="mt-1 w-full border border-gray-300 rounded-md p-2"
@@ -426,25 +511,48 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
                                     onChange={e => setNewTenant({ ...newTenant, occupation: e.target.value })}
                                 />
                             </div>
-                            <div className="flex justify-end gap-3 mt-6">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsAddTenantOpen(false)}
-                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                                >
-                                    Add Tenant
-                                </button>
-                            </div>
-                        </form>
                     </div>
-                </div>
+                    <div className="flex items-center gap-2 mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-100">
+                        <input
+                            type="checkbox"
+                            id="generatePDCs"
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            onChange={(e) => {
+                                // Store this preference in a temp state or just read it from DOM in handler (simpler via state usually, but for quick edit reading checked via logic if possible, or add state)
+                                // Adding a state for this is cleaner. Let's assume we modify the 'newLease' state or add a separate one.
+                                // For simplicity in this replace block, I'll recommend adding 'autoGeneratePayments' to the component state earlier. 
+                                // BUT since I can't edit the top of the file easily here, I'll add a 'generate_payments' field to newLease (as a temporary hack) or better, just use a ref or simple state if I could.
+                                // ACTUALLY, I will add a localized checkbox here and update a separate state variable I'll need to inject.
+                                // Wait, I can't inject state easily without multi-edit. 
+                                // PLAN: I will just add the UI here and assume I'll add the state 'autoGeneratePDCs' in the next step.
+                                setAutoGeneratePDCs(e.target.checked);
+                            }}
+                        />
+                        <label htmlFor="generatePDCs" className="text-sm font-medium text-gray-700">
+                            Auto-generate Monthly Payment Records? (For PDCs)
+                            <p className="text-xs text-gray-500 font-normal">Creates "Pending" payment entries for each month of the lease term.</p>
+                        </label>
+                    </div>
+
+                    <div className="flex justify-end gap-3 mt-6">
+                        <button
+                            type="button"
+                            onClick={() => setIsAddLeaseOpen(false)}
+                            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                            Create Lease
+                        </button>
+                    </div>
+                </form>
+                    </div>
+                </div >
             )}
-        </div>
+        </div >
     );
 };

@@ -177,6 +177,7 @@ export interface Lease {
   securityDeposit: number;
   status: 'Active' | 'Terminated' | 'Expired' | 'Renewed';
   terms?: string;
+  contractUrl?: string; // New field for file upload
   tenantName?: string; // Helper for UI
   propertyName?: string; // Helper for UI
 }

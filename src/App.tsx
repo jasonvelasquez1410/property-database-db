@@ -41,7 +41,7 @@ function App() {
 
   const renderPage = () => {
     switch (activePage) {
-      case 'dashboard': return <DashboardPage user={user!} onLogout={handleLogout} />;
+      case 'dashboard': return <DashboardPage user={user!} onLogout={handleLogout} onNavigate={setActivePage} />;
       case 'properties': return <PropertiesPage user={user!} onLogout={handleLogout} />;
       case 'documents': return <DocumentsPage user={user!} />;
       case 'finance': return <FinancePage user={user!} />;

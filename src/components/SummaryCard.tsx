@@ -28,14 +28,17 @@ const trendColorClasses = {
     none: 'text-gray-500',
 }
 
-export const SummaryCard = ({ icon, title, value, description, trend, trendDirection = 'none' }: SummaryCardProps) => {
+export const SummaryCard = ({ icon, title, value, description, trend, trendDirection = 'none', onClick }: SummaryCardProps & { onClick?: () => void }) => {
     return (
-        <div className="bg-white rounded-xl shadow p-5 flex flex-col justify-between">
+        <div
+            className={`bg-white rounded-xl shadow p-5 flex flex-col justify-between transition-transform duration-200 ${onClick ? 'cursor-pointer hover:scale-105 hover:shadow-lg' : ''}`}
+            onClick={onClick}
+        >
             <div>
                 <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-500 truncate">{title}</p>
-                      <p className="mt-1 text-3xl font-bold text-gray-900">{value}</p>
+                        <p className="text-sm font-medium text-gray-500 truncate">{title}</p>
+                        <p className="mt-1 text-3xl font-bold text-gray-900">{value}</p>
                     </div>
                     <div className={`flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-lg text-white ${iconColorClasses[icon] || 'bg-gray-500'}`}>
                         <Icon type={icon} className="w-7 h-7" />
@@ -43,8 +46,8 @@ export const SummaryCard = ({ icon, title, value, description, trend, trendDirec
                 </div>
                 <p className="mt-2 text-sm text-gray-500">{description}</p>
             </div>
-             {trend && trendDirection !== 'none' && (
-                 <div className="mt-4 flex items-baseline text-sm font-semibold">
+            {trend && trendDirection !== 'none' && (
+                <div className="mt-4 flex items-baseline text-sm font-semibold">
                     {trendDirection === 'up' && <Icon type="arrow-trending-up" className={`h-5 w-5 flex-shrink-0 self-center ${trendColorClasses[trendDirection]}`} />}
                     {trendDirection === 'down' && <Icon type="arrow-trending-down" className={`h-5 w-5 flex-shrink-0 self-center ${trendColorClasses[trendDirection]}`} />}
                     <span className="sr-only">{trendDirection === 'up' ? 'Increased by' : 'Decreased by'}</span>

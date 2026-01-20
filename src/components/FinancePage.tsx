@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { User, Property, PropertyType, PaymentStatus } from '../types';
 import { api } from '../services/api';
 import { Icon } from './shared/Icon';
+import { SummaryCard } from './SummaryCard';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement, TimeScale } from 'chart.js';
 import { Bar, Pie, Line } from 'react-chartjs-2';
 import 'chart.js/auto'; // Automatically registers all components
@@ -9,21 +10,6 @@ import 'chart.js/auto'; // Automatically registers all components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement, TimeScale);
 
 const formatCurrency = (amount: number) => `₱${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-const SummaryCard = ({ title, value, change, icon, iconBgColor }: { title: string, value: string, change: string, icon: any, iconBgColor: string }) => (
-    <div className="bg-white rounded-xl shadow p-5">
-        <div className="flex items-center">
-            <div className={`w-12 h-12 flex items-center justify-center rounded-lg text-white ${iconBgColor}`}>
-                <Icon type={icon} className="w-7 h-7" />
-            </div>
-            <div className="ml-4 overflow-hidden">
-                <p className="text-sm font-medium text-gray-500 truncate">{title}</p>
-                <p className="mt-1 text-2xl font-bold text-gray-900 truncate">{value}</p>
-            </div>
-        </div>
-        <p className={`mt-2 text-sm font-semibold ${change.startsWith('+') ? 'text-green-600' : change.startsWith('-') ? 'text-red-600' : 'text-gray-500'}`}>{change}</p>
-    </div>
-);
 
 interface FinancePageProps {
     user: User;
@@ -48,16 +34,54 @@ export const FinancePage = ({ user }: FinancePageProps) => {
         loadData();
     }, []);
 
+    const handleExportReport = () => {
+        // Generate CSV content
+        const headers = ['Property Name', 'Type', 'Acquisition Cost', 'Market Value', 'Payment Status', 'Last Updated'];
+        const rows = properties.map(p => {
+            const latestAppraisal = p.appraisals.sort((a, b) => new Date(b.appraisalDate).getTime() - new Date(a.appraisalDate).getTime())[0];
+            const marketValue = latestAppraisal?.appraisedValue || p.acquisition.totalCost;
+            return [
+                `"${p.propertyName}"`,
+                p.propertyType,
+                p.acquisition.totalCost,
+                marketValue,
+                p.payment.status,
+                new Date().toLocaleDateString()
+            ].join(',');
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8,"
+            + headers.join(',') + "\n"
+            + rows.join('\n');
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `financial_report_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        alert("Financial Report exported successfully!");
+    };
+
+    const scrollToSection = (id: string) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
     const financialSummary = useMemo(() => {
         const totalAcquisitionCost = properties.reduce((sum, p) => sum + p.acquisition.totalCost, 0);
         const totalMarketValue = properties.reduce((sum, p) => {
-            const latestAppraisal = p.appraisals.sort((a,b) => new Date(b.appraisalDate).getTime() - new Date(a.appraisalDate).getTime())[0];
+            const latestAppraisal = p.appraisals.sort((a, b) => new Date(b.appraisalDate).getTime() - new Date(a.appraisalDate).getTime())[0];
             return sum + (latestAppraisal?.appraisedValue || p.acquisition.totalCost);
         }, 0);
-        
+
         const thirtyDaysFromNow = new Date();
         thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-        
+
         const upcomingDueDates = properties.flatMap(p => p.documentation.docs)
             .filter(doc => doc.dueDate && new Date(doc.dueDate) <= thirtyDaysFromNow && new Date(doc.dueDate) >= new Date())
             .length;
@@ -67,7 +91,7 @@ export const FinancePage = ({ user }: FinancePageProps) => {
             // Use second to last appraisal, or acquisition cost if not available
             return sum + (appraisals[1]?.appraisedValue || p.acquisition.totalCost);
         }, 0);
-        
+
         const valueChangePercentage = totalMarketValue > 0 ? ((totalMarketValue - previousMarketValue) / previousMarketValue) * 100 : 0;
 
         return {
@@ -101,7 +125,7 @@ export const FinancePage = ({ user }: FinancePageProps) => {
                 const monthValue = properties.reduce((sum, p) => {
                     const latestAppraisalForMonth = p.appraisals
                         .filter(a => new Date(a.appraisalDate) <= date)
-                        .sort((a,b) => new Date(b.appraisalDate).getTime() - new Date(a.appraisalDate).getTime())[0];
+                        .sort((a, b) => new Date(b.appraisalDate).getTime() - new Date(a.appraisalDate).getTime())[0];
                     return sum + (latestAppraisalForMonth?.appraisedValue || p.acquisition.totalCost);
                 }, 0);
                 trendData[monthKey] = monthValue;
@@ -147,21 +171,56 @@ export const FinancePage = ({ user }: FinancePageProps) => {
                 <h1 className="text-3xl font-bold text-gray-900">Financial Tracking</h1>
                 <p className="mt-1 text-md text-gray-600">Monitor payments, costs, and financial performance across your property portfolio.</p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <SummaryCard title="Total Acquisition Cost" value={formatCurrency(financialSummary.totalAcquisitionCost)} change="+2.5%" icon="dollar-circle" iconBgColor="bg-green-500" />
-                <SummaryCard title="Current Market Value" value={formatCurrency(financialSummary.totalMarketValue)} change={`+${financialSummary.valueChangePercentage.toFixed(1)}%`} icon="chart-pie" iconBgColor="bg-blue-500" />
-                <SummaryCard title="Outstanding Payments" value={formatCurrency(financialSummary.outstandingPayments)} change="-15.3%" icon="exclamation-triangle" iconBgColor="bg-yellow-500" />
-                <SummaryCard title="Upcoming Due Dates" value={financialSummary.upcomingDueDates.toString()} change="Next 30 days" icon="calendar-days" iconBgColor="bg-red-500" />
+                <SummaryCard
+                    title="Total Acquisition Cost"
+                    value={formatCurrency(financialSummary.totalAcquisitionCost)}
+                    description="Total invested capital"
+                    trend="+2.5%"
+                    trendDirection="up"
+                    icon="dollar-circle"
+                    onClick={() => scrollToSection('cost-chart')}
+                />
+                <SummaryCard
+                    title="Current Market Value"
+                    value={formatCurrency(financialSummary.totalMarketValue)}
+                    description="Current valuation"
+                    trend={`+${financialSummary.valueChangePercentage.toFixed(1)}%`}
+                    trendDirection="up"
+                    icon="chart-pie"
+                    onClick={() => scrollToSection('value-trend-chart')}
+                />
+                <SummaryCard
+                    title="Outstanding Payments"
+                    value={formatCurrency(financialSummary.outstandingPayments)}
+                    description="Payables"
+                    trend="-15.3%"
+                    trendDirection="down"
+                    icon="exclamation-triangle"
+                    onClick={() => scrollToSection('payment-status-chart')}
+                />
+                <SummaryCard
+                    title="Upcoming Due Dates"
+                    value={financialSummary.upcomingDueDates.toString()}
+                    description="Due in next 30 days"
+                    trend=""
+                    trendDirection="none"
+                    icon="calendar-days"
+                    onClick={() => alert("Showing upcoming due dates filtering...")}
+                />
             </div>
 
             <div className="bg-white rounded-xl shadow p-4 space-y-4">
                 <div className="flex justify-between items-center">
                     <h3 className="font-bold text-lg">Financial Filters</h3>
-                     <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
                         <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium border bg-white rounded-md hover:bg-gray-50">Bulk Update</button>
-                        <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium border bg-white rounded-md hover:bg-gray-50">
-                            <Icon type="export" className="w-5 h-5"/> Export Report
+                        <button
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium border bg-white rounded-md hover:bg-gray-50"
+                            onClick={handleExportReport}
+                        >
+                            <Icon type="export" className="w-5 h-5" /> Export Report
                         </button>
                     </div>
                 </div>
@@ -174,21 +233,21 @@ export const FinancePage = ({ user }: FinancePageProps) => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div className="lg:col-span-3 bg-white rounded-xl shadow p-6">
+                <div id="cost-chart" className="lg:col-span-3 bg-white rounded-xl shadow p-6">
                     <h3 className="text-lg font-bold text-gray-900 mb-4">Cost Distribution by Property Type</h3>
                     <div className="h-80">
                         <Bar options={{ responsive: true, maintainAspectRatio: false }} data={chartData.costDistribution} />
                     </div>
                 </div>
-                 <div className="lg:col-span-2 bg-white rounded-xl shadow p-6">
+                <div id="payment-status-chart" className="lg:col-span-2 bg-white rounded-xl shadow p-6">
                     <h3 className="text-lg font-bold text-gray-900 mb-4">Payment Status Distribution</h3>
                     <div className="h-80">
-                         <Pie options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' }} }} data={chartData.paymentStatus} />
+                        <Pie options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }} data={chartData.paymentStatus} />
                     </div>
                 </div>
             </div>
 
-             <div className="bg-white rounded-xl shadow p-6">
+            <div id="value-trend-chart" className="bg-white rounded-xl shadow p-6">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Market Value Trends</h3>
                 <div className="h-80">
                     <Line options={{ responsive: true, maintainAspectRatio: false }} data={chartData.marketValueTrend} />

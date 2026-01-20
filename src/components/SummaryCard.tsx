@@ -20,6 +20,7 @@ const iconColorClasses: { [key in IconType]?: string } = {
     'calendar-days': 'bg-indigo-500',
     'building-office': 'bg-blue-500',
     'globe-alt': 'bg-teal-500',
+    'dollar-circle': 'bg-green-600',
 };
 
 const trendColorClasses = {

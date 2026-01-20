@@ -1,4 +1,3 @@
--- Create Tenants Table
 CREATE TABLE IF NOT EXISTS tenants (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
@@ -13,7 +12,6 @@ CREATE TABLE IF NOT EXISTS tenants (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create Leases Table
 CREATE TABLE IF NOT EXISTS leases (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     property_id UUID REFERENCES properties(id),
@@ -23,11 +21,10 @@ CREATE TABLE IF NOT EXISTS leases (
     monthly_rent NUMERIC,
     security_deposit NUMERIC,
     status TEXT DEFAULT 'Active', -- 'Active', 'Terminated', 'Expired', 'Renewed'
-    terms TEXT, -- URL or text description
+    contract_url TEXT, -- New field for file upload
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create Payments Table
 CREATE TABLE IF NOT EXISTS payments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     lease_id UUID REFERENCES leases(id),
@@ -47,16 +44,26 @@ ALTER TABLE leases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 
 -- Allow anonymous access for demo purposes (matching existing policy)
+-- Allow anonymous access for demo purposes (matching existing policy)
+DROP POLICY IF EXISTS "Allow anonymous select tenants" ON tenants;
 CREATE POLICY "Allow anonymous select tenants" ON tenants FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow anonymous insert tenants" ON tenants;
 CREATE POLICY "Allow anonymous insert tenants" ON tenants FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow anonymous update tenants" ON tenants;
 CREATE POLICY "Allow anonymous update tenants" ON tenants FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Allow anonymous select leases" ON leases;
 CREATE POLICY "Allow anonymous select leases" ON leases FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow anonymous insert leases" ON leases;
 CREATE POLICY "Allow anonymous insert leases" ON leases FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow anonymous update leases" ON leases;
 CREATE POLICY "Allow anonymous update leases" ON leases FOR UPDATE USING (true);
 
+DROP POLICY IF EXISTS "Allow anonymous select payments" ON payments;
 CREATE POLICY "Allow anonymous select payments" ON payments FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow anonymous insert payments" ON payments;
 CREATE POLICY "Allow anonymous insert payments" ON payments FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow anonymous update payments" ON payments;
 CREATE POLICY "Allow anonymous update payments" ON payments FOR UPDATE USING (true);
 
 -- Insert Demo Data (Optional - run this to populate tables)

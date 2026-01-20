@@ -1,3 +1,4 @@
+
 import { User, Property, PropertyType, Location, PaymentStatus, RecentActivity, Documentation } from '../types';
 
 // Mock user database
@@ -8,7 +9,7 @@ const MOCK_USERS: (User & { password_not_hashed: string })[] = [
 ];
 
 // Mock property database
-let MOCK_PROPERTIES: Property[] = [
+const MOCK_PROPERTIES: Property[] = [
   {
     id: 'prop-1',
     propertyName: 'Makati Prime Condominium Unit',
@@ -17,7 +18,7 @@ let MOCK_PROPERTIES: Property[] = [
     fullAddress: '123 Ayala Ave, Makati, Metro Manila',
     location: Location.LUZON,
     gpsCoordinates: '14.5547, 121.0244',
-    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Placeholder video
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
     unitNumber: '18A',
     floorNumber: '18th Floor',
     lotNo: 'Unit 18A, Tower 1',
@@ -27,28 +28,73 @@ let MOCK_PROPERTIES: Property[] = [
     brokersName: 'Jane Doe Realty',
     brokersContact: '0917-123-4567',
     buyersName: 'John Smith',
-    tctUrl: '#', tdUrl: '#', cctUrl: '#', locationPlanUrl: '#',
-    acquisition: { unitLotCost: 15000000, costPerSqm: 176470.59, totalCost: 15000000, },
-    payment: { status: PaymentStatus.FULLY_PAID, },
+    tctUrl: '#', tctFileName: undefined, tdUrl: '#', tdFileName: undefined, cctUrl: '#', cctFileName: undefined, locationPlanUrl: '#', locationPlanFileName: undefined,
+    acquisition: { unitLotCost: 15000000, costPerSqm: 176470.59, totalCost: 15000000, fitOutCost: undefined },
+    payment: { status: PaymentStatus.FULLY_PAID, paymentScheduleUrl: undefined, paymentScheduleFileName: undefined },
     documentation: {
       docs: [
-        { type: 'DOAS', status: 'Available (Original)', priority: 'Low', executionDate: '2022-01-15', documentUrl: '#', propertyId: 'prop-1', propertyName: 'Makati Prime Condominium Unit' }
+        { type: 'DOAS', status: 'Available (Original)', priority: 'Low', executionDate: '2022-01-15', documentUrl: '#', fileName: undefined, propertyId: 'prop-1', propertyName: 'Makati Prime Condominium Unit' }
       ],
       pendingDocuments: [],
     },
-    possession: { isTurnedOver: true, turnoverDate: '2022-02-01', authorizedRecipient: 'John Smith', },
-    insurance: { coverageDate: '2024-01-01', amountInsured: 10000000, insuranceCompany: 'AXA Philippines', policyUrl: '#', },
+    possession: { isTurnedOver: true, turnoverDate: '2022-02-01', authorizedRecipient: 'John Smith' },
+    insurance: { coverageDate: '2024-01-01', amountInsured: 10000000, insuranceCompany: 'AXA Philippines', policyUrl: '#', policyFileName: undefined },
     management: {
-      realEstateTaxes: { lastPaidDate: '2024-01-10', amountPaid: 45000, receiptUrl: '#' },
-      condoDues: { lastPaidDate: '2024-07-05', amountPaid: 8500, receiptUrl: '#' },
+      caretakerName: undefined, caretakerRatePerMonth: undefined,
+      realEstateTaxes: { lastPaidDate: '2024-01-10', amountPaid: 45000, receiptUrl: '#', receiptFileName: undefined },
+      condoDues: { lastPaidDate: '2024-07-05', amountPaid: 8500, receiptUrl: '#', receiptFileName: undefined },
     },
     appraisals: [
-      { appraisalDate: '2023-01-20', appraisedValue: 16000000, appraisalCompany: 'Cuervo Appraisals', reportUrl: '#' },
-      { appraisalDate: '2024-02-15', appraisedValue: 16500000, appraisalCompany: 'Cuervo Appraisals', reportUrl: '#' },
+      { appraisalDate: '2023-01-20', appraisedValue: 16000000, appraisalCompany: 'Cuervo Appraisals', reportUrl: '#', reportFileName: undefined },
+      { appraisalDate: '2024-02-15', appraisedValue: 16500000, appraisalCompany: 'Cuervo Appraisals', reportUrl: '#', reportFileName: undefined },
     ],
+    lease: undefined,
   },
   {
     id: 'prop-2',
+    propertyName: 'BGC Corporate Office Suite',
+    photoUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+    propertyType: PropertyType.OFFICE,
+    fullAddress: '25th Street, Bonifacio Global City, Taguig',
+    location: Location.LUZON,
+    gpsCoordinates: '14.5492, 121.0505',
+    videoUrl: 'https://www.youtube.com/watch?v=LXb3EKWsInQ',
+    unitNumber: '2405',
+    floorNumber: '24th Floor',
+    lotNo: 'Unit 2405, Ecoplaza',
+    tctOrCctNo: 'CCT-98765',
+    areaSqm: 120,
+    originalDeveloper: 'Megaworld',
+    brokersName: 'BGC Realtors',
+    brokersContact: '0918-555-0000',
+    buyersName: 'Tech Solutions Inc.',
+    tctUrl: '#', tctFileName: undefined, tdUrl: '#', tdFileName: undefined, cctUrl: '#', cctFileName: undefined, locationPlanUrl: '#', locationPlanFileName: undefined,
+    acquisition: { unitLotCost: 25000000, costPerSqm: 208333.33, totalCost: 28000000, fitOutCost: 3000000 },
+    payment: { status: PaymentStatus.FULLY_PAID, paymentScheduleUrl: undefined, paymentScheduleFileName: undefined },
+    documentation: {
+      docs: [],
+      pendingDocuments: ['Tax Declaration', 'Business Permit'],
+    },
+    possession: { isTurnedOver: true, turnoverDate: '2023-05-15', authorizedRecipient: 'CEO Tech Solutions' },
+    insurance: { coverageDate: '2024-06-01', amountInsured: 30000000, insuranceCompany: 'Malayan Insurance', policyUrl: '#', policyFileName: undefined },
+    management: {
+      caretakerName: 'Building Admin', caretakerRatePerMonth: 0,
+      realEstateTaxes: { lastPaidDate: '2024-01-15', amountPaid: 65000, receiptUrl: '#', receiptFileName: undefined },
+      condoDues: { lastPaidDate: '2024-07-01', amountPaid: 12000, receiptUrl: '#', receiptFileName: undefined },
+    },
+    appraisals: [],
+    lease: {
+      lessee: 'StartUp Hub',
+      leaseDate: '2023-08-01',
+      leaseRate: 150000,
+      termInYears: 3,
+      referringBroker: 'Direct',
+      brokerContact: '',
+      contractUrl: '#'
+    }
+  },
+  {
+    id: 'prop-3',
     propertyName: 'Cebu Commercial Building',
     photoUrl: 'https://images.unsplash.com/photo-1582407947304-fd86f028f716?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1092&q=80',
     propertyType: PropertyType.COMMERCIAL_BUILDING,
@@ -61,27 +107,27 @@ let MOCK_PROPERTIES: Property[] = [
     brokersName: 'Broker Cebu',
     brokersContact: '0922-987-6543',
     buyersName: 'TechCorp Inc.',
-    tctUrl: '#', tdUrl: '#', cctUrl: '#', locationPlanUrl: '#',
-    acquisition: { unitLotCost: 75000000, costPerSqm: 150000, totalCost: 75000000, },
-    payment: { status: PaymentStatus.FULLY_PAID, },
-    lease: { lessee: 'Global Outsourcing Co.', leaseDate: '2023-05-01', leaseRate: 250000, termInYears: 5, referringBroker: 'Prime Leases Inc.', brokerContact: '0918-111-2222', contractUrl: '#', },
+    tctUrl: '#', tctFileName: undefined, tdUrl: '#', tdFileName: undefined, cctUrl: '#', cctFileName: undefined, locationPlanUrl: '#', locationPlanFileName: undefined,
+    acquisition: { unitLotCost: 75000000, costPerSqm: 150000, totalCost: 75000000, fitOutCost: undefined },
+    payment: { status: PaymentStatus.FULLY_PAID, paymentScheduleUrl: undefined, paymentScheduleFileName: undefined },
+    lease: { lessee: 'Global Outsourcing Co.', leaseDate: '2023-05-01', leaseRate: 250000, termInYears: 5, referringBroker: 'Prime Leases Inc.', brokerContact: '0918-111-2222', contractUrl: '#' },
     documentation: {
       docs: [
-        { type: 'TCT', status: 'Missing Original', priority: 'High', dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), documentUrl: '#', propertyId: 'prop-3', propertyName: 'Cebu Commercial Building' },
-        { type: 'TD', status: 'For Submission', priority: 'Medium', dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), documentUrl: '#', propertyId: 'prop-3', propertyName: 'Cebu Commercial Building' }
+        { type: 'TCT', status: 'Missing Original', priority: 'High', executionDate: '2021-09-01', dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), documentUrl: '#', propertyId: 'prop-3', propertyName: 'Cebu Commercial Building', fileName: undefined },
+        { type: 'TD', status: 'For Submission', priority: 'Medium', executionDate: '2021-09-01', dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), documentUrl: '#', propertyId: 'prop-3', propertyName: 'Cebu Commercial Building', fileName: undefined }
       ],
       pendingDocuments: ['Original TCT from seller', 'Updated Tax Declaration'],
     },
-    possession: { isTurnedOver: true, turnoverDate: '2021-09-01', authorizedRecipient: 'TechCorp Representative', },
-    insurance: { coverageDate: '2024-02-01', amountInsured: 60000000, insuranceCompany: 'Malayan Insurance', policyUrl: '#', },
-    management: { caretakerName: 'Building Admin', realEstateTaxes: { lastPaidDate: '2024-03-15', amountPaid: 150000, receiptUrl: '#' }, },
+    possession: { isTurnedOver: true, turnoverDate: '2021-09-01', authorizedRecipient: 'TechCorp Representative' },
+    insurance: { coverageDate: '2024-02-01', amountInsured: 60000000, insuranceCompany: 'Malayan Insurance', policyUrl: '#', policyFileName: undefined },
+    management: { caretakerName: 'Building Admin', caretakerRatePerMonth: undefined, realEstateTaxes: { lastPaidDate: '2024-03-15', amountPaid: 150000, receiptUrl: '#', receiptFileName: undefined }, condoDues: { lastPaidDate: undefined, amountPaid: undefined, receiptUrl: '#', receiptFileName: undefined } },
     appraisals: [
-      { appraisalDate: '2023-03-10', appraisedValue: 80000000, appraisalCompany: 'Asian Appraisal Company', reportUrl: '#' },
-      { appraisalDate: '2024-04-10', appraisedValue: 82500000, appraisalCompany: 'Asian Appraisal Company', reportUrl: '#' },
+      { appraisalDate: '2023-03-10', appraisedValue: 80000000, appraisalCompany: 'Asian Appraisal Company', reportUrl: '#', reportFileName: undefined },
+      { appraisalDate: '2024-04-10', appraisedValue: 82500000, appraisalCompany: 'Asian Appraisal Company', reportUrl: '#', reportFileName: undefined },
     ],
   },
   {
-    id: 'prop-3',
+    id: 'prop-4',
     propertyName: 'Davao Agricultural Land',
     photoUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1332&q=80',
     propertyType: PropertyType.LAND_WITH_IMPROVEMENTS,
@@ -94,21 +140,23 @@ let MOCK_PROPERTIES: Property[] = [
     brokersName: 'Mindanao Realty',
     brokersContact: '0945-333-4444',
     buyersName: 'AgriInvest Corp.',
-    tctUrl: '#', tdUrl: '#', cctUrl: '#', locationPlanUrl: '#',
-    acquisition: { unitLotCost: 5000000, costPerSqm: 500, totalCost: 5000000, },
-    payment: { status: PaymentStatus.AMORTIZED, paymentScheduleUrl: '#', },
+    tctUrl: '#', tctFileName: undefined, tdUrl: '#', tdFileName: undefined, cctUrl: '#', cctFileName: undefined, locationPlanUrl: '#', locationPlanFileName: undefined,
+    acquisition: { unitLotCost: 5000000, costPerSqm: 500, totalCost: 5000000, fitOutCost: undefined },
+    payment: { status: PaymentStatus.AMORTIZED, paymentScheduleUrl: '#', paymentScheduleFileName: undefined },
     documentation: {
       docs: [
-        { type: 'CTS', status: 'Available (Copy)', priority: 'Low', executionDate: '2023-06-01', documentUrl: '#', propertyId: 'prop-3', propertyName: 'Davao Agricultural Land' }
+        { type: 'CTS', status: 'Available (Copy)', priority: 'Low', executionDate: '2023-06-01', documentUrl: '#', fileName: undefined, propertyId: 'prop-4', propertyName: 'Davao Agricultural Land' }
       ],
       pendingDocuments: ['Deed of Absolute Sale upon full payment'],
     },
-    possession: { isTurnedOver: false, },
-    management: { caretakerName: 'Mang Teban', caretakerRatePerMonth: 10000, realEstateTaxes: { lastPaidDate: '2024-01-20', amountPaid: 15000, receiptUrl: '#' }, },
+    possession: { isTurnedOver: false, turnoverDate: undefined, authorizedRecipient: undefined },
+    management: { caretakerName: 'Mang Teban', caretakerRatePerMonth: 10000, realEstateTaxes: { lastPaidDate: '2024-01-20', amountPaid: 15000, receiptUrl: '#', receiptFileName: undefined }, condoDues: { lastPaidDate: undefined, amountPaid: undefined, receiptUrl: '#', receiptFileName: undefined } },
     appraisals: [
-      { appraisalDate: '2023-05-15', appraisedValue: 5500000, appraisalCompany: 'Local Assessor Office', reportUrl: '#' },
-      { appraisalDate: '2024-05-20', appraisedValue: 6000000, appraisalCompany: 'Local Assessor Office', reportUrl: '#' },
+      { appraisalDate: '2023-05-15', appraisedValue: 5500000, appraisalCompany: 'Local Assessor Office', reportUrl: '#', reportFileName: undefined },
+      { appraisalDate: '2024-05-20', appraisedValue: 6000000, appraisalCompany: 'Local Assessor Office', reportUrl: '#', reportFileName: undefined },
     ],
+    lease: undefined,
+    insurance: undefined
   },
 ];
 
@@ -118,6 +166,19 @@ const MOCK_ACTIVITY: RecentActivity[] = [
   { id: 'act-3', type: 'Payment Received', title: 'Payment Received', description: 'Lease payment from Global Outsourcing', timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
   { id: 'act-4', type: 'Task Completed', title: 'Task Completed', description: 'Updated appraisal for Davao Land', timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
 ];
+
+const STORAGE_KEY = 'svm_properties_data';
+const saveProperties = (props: Property[]) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(props));
+};
+
+const loadProperties = (): Property[] => {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  return stored ? JSON.parse(stored) : MOCK_PROPERTIES;
+};
+
+// Initialize properties from storage or mock
+let currentProperties = loadProperties();
 
 
 export const api = {
@@ -139,7 +200,9 @@ export const api = {
   fetchProperties: (): Promise<Property[]> => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve(MOCK_PROPERTIES);
+        // Reload from storage to ensure sync
+        currentProperties = loadProperties();
+        resolve(currentProperties);
       }, 800);
     });
   },
@@ -154,7 +217,7 @@ export const api = {
     return new Promise((resolve) => {
       setTimeout(() => {
         const pending: Documentation[] = [];
-        MOCK_PROPERTIES.forEach(p => {
+        currentProperties.forEach(p => {
           p.documentation.docs.forEach(doc => {
             if (doc.status.includes('Missing') || doc.status.includes('Submission')) {
               pending.push(doc);
@@ -173,7 +236,8 @@ export const api = {
           id: `prop-${Date.now()}`,
           photoUrl: `https://picsum.photos/seed/new${Date.now()}/800/600`,
         };
-        MOCK_PROPERTIES.unshift(newProperty);
+        currentProperties.unshift(newProperty);
+        saveProperties(currentProperties);
         resolve(newProperty);
       }, 500);
     });
@@ -181,9 +245,10 @@ export const api = {
   updateProperty: (propertyData: Property): Promise<Property> => {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        const index = MOCK_PROPERTIES.findIndex(p => p.id === propertyData.id);
+        const index = currentProperties.findIndex(p => p.id === propertyData.id);
         if (index !== -1) {
-          MOCK_PROPERTIES[index] = propertyData;
+          currentProperties[index] = propertyData;
+          saveProperties(currentProperties);
           resolve(propertyData);
         } else {
           reject(new Error("Property not found"));
@@ -194,15 +259,16 @@ export const api = {
   addDocumentToProperty: (propertyId: string, doc: Omit<Documentation, 'propertyId' | 'propertyName'>): Promise<Property> => {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        const propertyIndex = MOCK_PROPERTIES.findIndex(p => p.id === propertyId);
+        const propertyIndex = currentProperties.findIndex(p => p.id === propertyId);
         if (propertyIndex !== -1) {
-          const property = MOCK_PROPERTIES[propertyIndex];
+          const property = currentProperties[propertyIndex];
           const newDoc: Documentation = {
             ...doc,
             propertyId: property.id,
             propertyName: property.propertyName,
           };
           property.documentation.docs.push(newDoc);
+          saveProperties(currentProperties);
           resolve(property);
         } else {
           reject(new Error('Property not found'));
@@ -210,4 +276,14 @@ export const api = {
       }, 300);
     });
   },
+
+  // Management functions
+  resetToDemoData: () => {
+    localStorage.removeItem(STORAGE_KEY);
+    window.location.reload();
+  },
+  clearAllData: () => {
+    saveProperties([]);
+    window.location.reload();
+  }
 };

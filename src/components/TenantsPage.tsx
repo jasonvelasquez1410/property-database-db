@@ -118,6 +118,58 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
                 </button>
             </div>
 
+            {/* Workflow Guide */}
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 sm:p-6">
+                <h3 className="text-sm font-bold text-blue-900 uppercase tracking-wide mb-4 flex items-center gap-2">
+                    <Icon type="help" className="w-5 h-5" />
+                    How to Manage Rentals
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+                    {/* Step 1 */}
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-sm">1</div>
+                            <h4 className="font-semibold text-gray-900">Add Tenant</h4>
+                        </div>
+                        <p className="text-sm text-gray-600 ml-11">
+                            Create a profile for your new tenant with their contact details and ID.
+                            <br />
+                            <span className="text-xs text-blue-600 font-medium cursor-pointer hover:underline" onClick={() => setIsAddTenantOpen(true)}>+ Add Tenant Now</span>
+                        </p>
+                    </div>
+                    {/* Arrow for Desktop */}
+                    <div className="hidden md:block absolute top-4 left-[30%] w-[10%] h-[2px] bg-blue-200"></div>
+
+                    {/* Step 2 */}
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-sm">2</div>
+                            <h4 className="font-semibold text-gray-900">Create Lease</h4>
+                        </div>
+                        <p className="text-sm text-gray-600 ml-11">
+                            Link the tenant to a specific property. Set the monthly rent, term dates, and deposit.
+                            <br />
+                            <span className="text-xs text-blue-600 font-medium cursor-pointer hover:underline" onClick={() => { setActiveTab('leases'); setIsAddLeaseOpen(true); }}>+ New Lease</span>
+                        </p>
+                    </div>
+                    {/* Arrow for Desktop */}
+                    <div className="hidden md:block absolute top-4 left-[64%] w-[10%] h-[2px] bg-blue-200"></div>
+
+                    {/* Step 3 */}
+                    <div className="relative z-10">
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-sm">3</div>
+                            <h4 className="font-semibold text-gray-900">Track Payments</h4>
+                        </div>
+                        <p className="text-sm text-gray-600 ml-11">
+                            Record monthly rent payments against the active lease to keep your ledger updated.
+                            <br />
+                            <span className="text-xs text-blue-600 font-medium cursor-pointer hover:underline" onClick={() => { setActiveTab('payments'); setIsAddPaymentOpen(true); }}>+ Record Payment</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             {/* Tabs */}
             <div className="flex border-b border-gray-200 bg-white rounded-t-lg px-4 pt-4">
                 <button

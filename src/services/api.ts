@@ -67,8 +67,8 @@ let MOCK_PROPERTIES: Property[] = [
     lease: { lessee: 'Global Outsourcing Co.', leaseDate: '2023-05-01', leaseRate: 250000, termInYears: 5, referringBroker: 'Prime Leases Inc.', brokerContact: '0918-111-2222', contractUrl: '#', },
     documentation: {
       docs: [
-        { type: 'TCT', status: 'Missing Original', priority: 'High', dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), documentUrl: '#', propertyId: 'prop-2', propertyName: 'Cebu Commercial Building' },
-        { type: 'TD', status: 'For Submission', priority: 'Medium', dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), documentUrl: '#', propertyId: 'prop-2', propertyName: 'Cebu Commercial Building' }
+        { type: 'TCT', status: 'Missing Original', priority: 'High', dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), documentUrl: '#', propertyId: 'prop-3', propertyName: 'Cebu Commercial Building' },
+        { type: 'TD', status: 'For Submission', priority: 'Medium', dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), documentUrl: '#', propertyId: 'prop-3', propertyName: 'Cebu Commercial Building' }
       ],
       pendingDocuments: ['Original TCT from seller', 'Updated Tax Declaration'],
     },

@@ -2,9 +2,9 @@ import { User, Property, PropertyType, Location, PaymentStatus, RecentActivity, 
 
 // Mock user database
 const MOCK_USERS: (User & { password_not_hashed: string })[] = [
-  { id: 'user-1', email: 'admin@propertyhub.com', password_not_hashed: 'admin123', name: 'John Doe', role: 'admin' },
-  { id: 'user-2', email: 'manager@propertyhub.com', password_not_hashed: 'manager123', name: 'Jane Smith', role: 'manager' },
-  { id: 'user-3', email: 'staff@propertyhub.com', password_not_hashed: 'staff123', name: 'Peter Jones', role: 'staff' },
+  { id: 'user-1', email: 'demo@email.com', password_not_hashed: 'demo123', name: 'Demo Admin', role: 'admin' },
+  { id: 'user-2', email: 'manager@email.com', password_not_hashed: 'manager123', name: 'Jane Switch', role: 'manager' },
+  { id: 'user-3', email: 'staff@email.com', password_not_hashed: 'staff123', name: 'Peter Staff', role: 'staff' },
 ];
 
 // Mock property database
@@ -72,8 +72,8 @@ let MOCK_PROPERTIES: Property[] = [
     insurance: { coverageDate: '2024-02-01', amountInsured: 60000000, insuranceCompany: 'Malayan Insurance', policyUrl: '#', },
     management: { caretakerName: 'Building Admin', realEstateTaxes: { lastPaidDate: '2024-03-15', amountPaid: 150000, receiptUrl: '#' }, },
     appraisals: [
-       { appraisalDate: '2023-03-10', appraisedValue: 80000000, appraisalCompany: 'Asian Appraisal Company', reportUrl: '#' },
-       { appraisalDate: '2024-04-10', appraisedValue: 82500000, appraisalCompany: 'Asian Appraisal Company', reportUrl: '#' },
+      { appraisalDate: '2023-03-10', appraisedValue: 80000000, appraisalCompany: 'Asian Appraisal Company', reportUrl: '#' },
+      { appraisalDate: '2024-04-10', appraisedValue: 82500000, appraisalCompany: 'Asian Appraisal Company', reportUrl: '#' },
     ],
   },
   {
@@ -109,10 +109,10 @@ let MOCK_PROPERTIES: Property[] = [
 ];
 
 const MOCK_ACTIVITY: RecentActivity[] = [
-    { id: 'act-1', type: 'New Property', title: 'New Property Added', description: 'Makati Commercial Building - Unit 2A', timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString() },
-    { id: 'act-2', type: 'Document Upload', title: 'Document Uploaded', description: 'TCT for Cebu Land Property', timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString() },
-    { id: 'act-3', type: 'Payment Received', title: 'Payment Received', description: 'Lease payment from Global Outsourcing', timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
-    { id: 'act-4', type: 'Task Completed', title: 'Task Completed', description: 'Updated appraisal for Davao Land', timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
+  { id: 'act-1', type: 'New Property', title: 'New Property Added', description: 'Makati Commercial Building - Unit 2A', timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString() },
+  { id: 'act-2', type: 'Document Upload', title: 'Document Uploaded', description: 'TCT for Cebu Land Property', timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString() },
+  { id: 'act-3', type: 'Payment Received', title: 'Payment Received', description: 'Lease payment from Global Outsourcing', timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString() },
+  { id: 'act-4', type: 'Task Completed', title: 'Task Completed', description: 'Updated appraisal for Davao Land', timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
 ];
 
 
@@ -124,10 +124,10 @@ export const api = {
           (u) => u.email === email && u.password_not_hashed === password_not_hashed
         );
         if (user) {
-            const { password_not_hashed, ...userToReturn } = user;
-            resolve(userToReturn);
+          const { password_not_hashed, ...userToReturn } = user;
+          resolve(userToReturn);
         } else {
-            resolve(null);
+          resolve(null);
         }
       }, 500);
     });
@@ -140,51 +140,51 @@ export const api = {
     });
   },
   fetchRecentActivity: (): Promise<RecentActivity[]> => {
-      return new Promise((resolve) => {
-          setTimeout(() => {
-              resolve(MOCK_ACTIVITY);
-          }, 400);
-      });
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(MOCK_ACTIVITY);
+      }, 400);
+    });
   },
   fetchPendingDocuments: (): Promise<Documentation[]> => {
-      return new Promise((resolve) => {
-          setTimeout(() => {
-              const pending: Documentation[] = [];
-              MOCK_PROPERTIES.forEach(p => {
-                  p.documentation.docs.forEach(doc => {
-                      if (doc.status.includes('Missing') || doc.status.includes('Submission')) {
-                          pending.push(doc);
-                      }
-                  })
-              });
-              resolve(pending.sort((a,b) => (a.priority === 'High' ? -1 : 1)));
-          }, 600);
-      });
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const pending: Documentation[] = [];
+        MOCK_PROPERTIES.forEach(p => {
+          p.documentation.docs.forEach(doc => {
+            if (doc.status.includes('Missing') || doc.status.includes('Submission')) {
+              pending.push(doc);
+            }
+          })
+        });
+        resolve(pending.sort((a, b) => (a.priority === 'High' ? -1 : 1)));
+      }, 600);
+    });
   },
   addProperty: (propertyData: Omit<Property, 'id' | 'photoUrl'>): Promise<Property> => {
     return new Promise((resolve) => {
-        setTimeout(() => {
-            const newProperty: Property = {
-                ...propertyData,
-                id: `prop-${Date.now()}`,
-                photoUrl: `https://picsum.photos/seed/new${Date.now()}/800/600`,
-            };
-            MOCK_PROPERTIES.unshift(newProperty);
-            resolve(newProperty);
-        }, 500);
+      setTimeout(() => {
+        const newProperty: Property = {
+          ...propertyData,
+          id: `prop-${Date.now()}`,
+          photoUrl: `https://picsum.photos/seed/new${Date.now()}/800/600`,
+        };
+        MOCK_PROPERTIES.unshift(newProperty);
+        resolve(newProperty);
+      }, 500);
     });
   },
   updateProperty: (propertyData: Property): Promise<Property> => {
     return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            const index = MOCK_PROPERTIES.findIndex(p => p.id === propertyData.id);
-            if (index !== -1) {
-                MOCK_PROPERTIES[index] = propertyData;
-                resolve(propertyData);
-            } else {
-                reject(new Error("Property not found"));
-            }
-        }, 500);
+      setTimeout(() => {
+        const index = MOCK_PROPERTIES.findIndex(p => p.id === propertyData.id);
+        if (index !== -1) {
+          MOCK_PROPERTIES[index] = propertyData;
+          resolve(propertyData);
+        } else {
+          reject(new Error("Property not found"));
+        }
+      }, 500);
     });
   },
   addDocumentToProperty: (propertyId: string, doc: Omit<Documentation, 'propertyId' | 'propertyName'>): Promise<Property> => {

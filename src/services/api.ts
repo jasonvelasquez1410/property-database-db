@@ -150,11 +150,11 @@ export const api = {
 
     if (error || !data.user) {
       console.error('Login error:', error);
-      // Fallback to 'demo' user if auth fails (for testing/demo purposes only or prevent lockouts)
-      // Or strictly return null.
-      // For now, let's keep the mock login fallback if supabase auth isn't fully set up with users
-      if (email === 'demo@email.com' && password_not_hashed === 'demo123') {
-        return { id: 'user-1', email: 'demo@email.com', name: 'Demo Admin', role: 'admin' };
+      // Fallback to mock users if Supabase auth fails (allows using demo credentials without creating real accounts yet)
+      const mockUser = MOCK_USERS.find(u => u.email === email && u.password_not_hashed === password_not_hashed);
+      if (mockUser) {
+        const { password_not_hashed, ...u } = mockUser;
+        return u;
       }
       return null;
     }

@@ -58,3 +58,13 @@ CREATE POLICY "Allow anonymous update leases" ON leases FOR UPDATE USING (true);
 CREATE POLICY "Allow anonymous select payments" ON payments FOR SELECT USING (true);
 CREATE POLICY "Allow anonymous insert payments" ON payments FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow anonymous update payments" ON payments FOR UPDATE USING (true);
+
+-- Insert Demo Data (Optional - run this to populate tables)
+INSERT INTO tenants (name, email, phone, occupation, status)
+VALUES 
+    ('Sarah Jenkins', 'sarah.j@example.com', '0917-555-0123', 'Marketing Manager', 'Active'),
+    ('Michael Ross', 'mike.ross@example.com', '0918-555-0987', 'Lawyer', 'Active'),
+    ('Jessica Pearson', 'jessica.p@example.com', '0917-555-4321', 'Managing Partner', 'Past');
+
+-- Note: You would need real property IDs to insert valid leases linked to properties.
+-- The app will allow you to create them via the UI once tenants are added.

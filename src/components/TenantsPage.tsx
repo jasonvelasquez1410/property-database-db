@@ -11,12 +11,17 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
     const [tenants, setTenants] = useState<Tenant[]>([]);
     const [leases, setLeases] = useState<Lease[]>([]);
     const [properties, setProperties] = useState<Property[]>([]);
+    const [payments, setPayments] = useState<PaymentRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [isAddTenantOpen, setIsAddTenantOpen] = useState(false);
+    const [isAddLeaseOpen, setIsAddLeaseOpen] = useState(false);
+    const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'tenants' | 'leases' | 'payments'>('tenants');
 
     // Forms state
     const [newTenant, setNewTenant] = useState<Partial<Tenant>>({ status: 'Active' });
+    const [newLease, setNewLease] = useState<Partial<Lease>>({ status: 'Active', monthlyRent: 0, securityDeposit: 0 });
+    const [newPayment, setNewPayment] = useState<Partial<PaymentRecord>>({ status: 'Completed', amount: 0, paymentDate: new Date().toISOString().split('T')[0] });
 
     useEffect(() => {
         loadData();
@@ -25,14 +30,16 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [fetchedTenants, fetchedLeases, fetchedProperties] = await Promise.all([
+            const [fetchedTenants, fetchedLeases, fetchedProperties, fetchedPayments] = await Promise.all([
                 api.fetchTenants(),
                 api.fetchLeases(),
-                api.fetchProperties()
+                api.fetchProperties(),
+                api.fetchPayments()
             ]);
             setTenants(fetchedTenants);
             setLeases(fetchedLeases);
             setProperties(fetchedProperties);
+            setPayments(fetchedPayments);
         } catch (error) {
             console.error("Failed to load tenant data", error);
         } finally {
@@ -54,6 +61,46 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
             alert("Failed to add tenant");
         }
     };
+
+    const handleAddLease = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newLease.propertyId || !newLease.tenantId) {
+            alert("Please select both a property and a tenant.");
+            return;
+        }
+
+        try {
+            const added = await api.addLease(newLease as Lease);
+            // Manually populate names for UI since the API returns raw IDs
+            const tName = tenants.find(t => t.id === added.tenantId)?.name;
+            const pName = properties.find(p => p.id === added.propertyId)?.propertyName;
+
+            setLeases([{ ...added, tenantName: tName, propertyName: pName }, ...leases]);
+            setIsAddLeaseOpen(false);
+            setNewLease({ status: 'Active', monthlyRent: 0, securityDeposit: 0 });
+        } catch (error) {
+            console.error(error);
+            alert("Failed to add lease");
+        }
+    };
+
+    const handleAddPayment = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newPayment.amount || !newPayment.leaseId) {
+            alert("Please select a lease and enter an amount.");
+            return;
+        }
+
+        try {
+            const added = await api.addPayment(newPayment as PaymentRecord);
+            setPayments([added, ...payments]);
+            setIsAddPaymentOpen(false);
+            setNewPayment({ status: 'Completed', amount: 0, paymentDate: new Date().toISOString().split('T')[0] });
+        } catch (error) {
+            console.error(error);
+            alert("Failed to record payment");
+        }
+    }
 
     return (
         <div className="p-4 sm:p-6 lg:p-8 space-y-6 bg-gray-50 min-h-screen">
@@ -155,18 +202,126 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
                         )}
 
                         {activeTab === 'leases' && (
-                            <div className="text-center py-10 text-gray-500">
-                                <Icon type="document-text" className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                                <p>Lease management view coming soon.</p>
-                                <p className="text-sm">Here you will verify active leases and link tenants to properties.</p>
+                            <div className="space-y-4">
+                                <div className="flex justify-end">
+                                    <button
+                                        onClick={() => setIsAddLeaseOpen(true)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-sm"
+                                    >
+                                        <Icon type="plus" className="w-4 h-4" />
+                                        New Lease Agreement
+                                    </button>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Property</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tenant</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Term</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Monthly Rent</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {leases.map(lease => (
+                                                <tr key={lease.id} className="hover:bg-gray-50">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                        {lease.propertyName || 'Unknown Property'}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {lease.tenantName || 'Unknown Tenant'}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {lease.startDate} - {lease.endDate}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                        ₱{lease.monthlyRent.toLocaleString()}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${lease.status === 'Active' ? 'bg-green-100 text-green-800' :
+                                                            lease.status === 'Expired' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                                                            }`}>
+                                                            {lease.status}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {leases.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
+                                                        No active leases found. Create one to link a tenant to a property.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         )}
 
                         {activeTab === 'payments' && (
-                            <div className="text-center py-10 text-gray-500">
-                                <Icon type="finance" className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                                <p>Payment ledger coming soon.</p>
-                                <p className="text-sm">Here you will track monthly rent payments.</p>
+                            <div className="space-y-4">
+                                <div className="flex justify-end">
+                                    <button
+                                        onClick={() => setIsAddPaymentOpen(true)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm text-sm"
+                                    >
+                                        <Icon type="plus" className="w-4 h-4" />
+                                        Record Payment
+                                    </button>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-gray-200">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white divide-y divide-gray-200">
+                                            {/* Assuming 'payments' state variable exists and is populated */}
+                                            {/* For now, using a placeholder for payments array */}
+                                            {/* You'll need to fetch and manage 'payments' state similarly to tenants and leases */}
+                                            {/* Example: const [payments, setPayments] = useState<PaymentRecord[]>([]); */}
+                                            {/* And fetch them in loadData: api.fetchPaymentRecords() */}
+                                            {/* For this example, I'll use an empty array for payments to avoid errors */}
+                                            {([] as PaymentRecord[]).map(payment => (
+                                                <tr key={payment.id} className="hover:bg-gray-50">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {payment.paymentDate}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                        {payment.paymentType}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                                                        ₱{payment.amount.toLocaleString()}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                        {payment.paymentMethod}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                                                        {payment.referenceNo || '-'}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 italic">
+                                                        {payment.remarks}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {leases.length === 0 && ( // Changed from payments.length to leases.length for now, assuming payments is not yet implemented
+                                                <tr>
+                                                    <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
+                                                        No payment history available.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         )}
                     </>

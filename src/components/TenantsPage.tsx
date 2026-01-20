@@ -436,7 +436,7 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
             {/* Add Tenant Modal */}
             {isAddTenantOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 max-h-[85vh] overflow-y-auto">
                         <h2 className="text-xl font-bold mb-4">Add New Tenant</h2>
                         <form onSubmit={handleAddTenant} className="space-y-4">
                             <div>
@@ -502,7 +502,7 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
             {/* Add Lease Modal */}
             {isAddLeaseOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
+                    <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6 max-h-[85vh] overflow-y-auto">
                         <h2 className="text-xl font-bold mb-4">Create New Lease</h2>
                         <form onSubmit={handleAddLease} className="space-y-4">
                             <div>

@@ -16,6 +16,8 @@ let MOCK_PROPERTIES: Property[] = [
     propertyType: PropertyType.CONDOMINIUM,
     fullAddress: '123 Ayala Ave, Makati, Metro Manila',
     location: Location.LUZON,
+    gpsCoordinates: '14.5547, 121.0244',
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Placeholder video
     unitNumber: '18A',
     floorNumber: '18th Floor',
     lotNo: 'Unit 18A, Tower 1',

@@ -117,6 +117,8 @@ export interface Property {
   propertyType: PropertyType;
   fullAddress: string;
   location: Location;
+  gpsCoordinates?: string;
+  videoUrl?: string;
   unitNumber?: string;
   floorNumber?: string;
   lotNo: string;

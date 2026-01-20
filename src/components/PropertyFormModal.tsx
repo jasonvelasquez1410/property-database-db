@@ -18,6 +18,8 @@ const getInitialState = (): Omit<Property, 'id' | 'photoUrl'> => ({
     propertyType: PropertyType.CONDOMINIUM,
     fullAddress: '',
     location: Location.LUZON,
+    gpsCoordinates: '',
+    videoUrl: '',
     unitNumber: '',
     floorNumber: '',
     lotNo: '',
@@ -220,6 +222,20 @@ export const PropertyFormModal = ({ onClose, onSubmit, property, loading }: Prop
                     <FormField label="Full Address" id="fullAddress" required>
                         <textarea id="fullAddress" name="fullAddress" value={propertyData.fullAddress} onChange={handleChange} rows={2} className="w-full border-gray-300 rounded-md shadow-sm" />
                     </FormField>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField label="GPS Coordinates" id="gpsCoordinates">
+                            <div className="relative">
+                                <Icon type="map-pin" className="absolute top-2.5 left-3 w-4 h-4 text-gray-400" />
+                                <input id="gpsCoordinates" name="gpsCoordinates" type="text" value={propertyData.gpsCoordinates || ''} onChange={handleChange} className="w-full pl-9 border-gray-300 rounded-md shadow-sm" placeholder="e.g. 14.5547, 121.0244" />
+                            </div>
+                        </FormField>
+                        <FormField label="Video Tour URL" id="videoUrl">
+                            <div className="relative">
+                                <Icon type="video" className="absolute top-2.5 left-3 w-4 h-4 text-gray-400" />
+                                <input id="videoUrl" name="videoUrl" type="url" value={propertyData.videoUrl || ''} onChange={handleChange} className="w-full pl-9 border-gray-300 rounded-md shadow-sm" placeholder="https://youtube.com/..." />
+                            </div>
+                        </FormField>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <FormField label="Area (sqm)" id="areaSqm" required><input id="areaSqm" name="areaSqm" type="number" value={propertyData.areaSqm} onChange={handleChange} className="w-full border-gray-300 rounded-md shadow-sm" /></FormField>
                         <FormField label="Unit No." id="unitNumber"><input id="unitNumber" name="unitNumber" type="text" value={propertyData.unitNumber || ''} onChange={handleChange} className="w-full border-gray-300 rounded-md shadow-sm" placeholder="e.g. 18A" /></FormField>

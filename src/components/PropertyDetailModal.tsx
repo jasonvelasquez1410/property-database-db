@@ -97,6 +97,20 @@ export const PropertyDetailModal = ({ property, user, onClose, onEdit }: Propert
                             <DetailItem label="Lot/Blk No." value={property.lotNo} />
                             <DetailItem label="TCT/CCT No." value={property.tctOrCctNo} />
                         </div>
+                        <div className="flex flex-col gap-3 pt-4 border-t mt-4">
+                            {property.gpsCoordinates && (
+                                <a href={`https://www.google.com/maps/search/?api=1&query=${property.gpsCoordinates}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full py-2 bg-green-50 text-green-700 border border-green-200 rounded-md hover:bg-green-100 transition-colors font-semibold">
+                                    <Icon type="map-pin" className="w-5 h-5" />
+                                    View on Google Maps
+                                </a>
+                            )}
+                            {property.videoUrl && (
+                                <a href={property.videoUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full py-2 bg-red-50 text-red-700 border border-red-200 rounded-md hover:bg-red-100 transition-colors font-semibold">
+                                    <Icon type="video" className="w-5 h-5" />
+                                    Watch Video Tour
+                                </a>
+                            )}
+                        </div>
                     </div>
                     <main className="w-full md:w-2/3 xl:w-3/5 flex flex-col min-h-0">
                         <nav className="border-b border-gray-200 px-4 sm:px-6 bg-white">
@@ -106,8 +120,8 @@ export const PropertyDetailModal = ({ property, user, onClose, onEdit }: Propert
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
                                         className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
-                                                ? 'border-blue-500 text-blue-600'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            ? 'border-blue-500 text-blue-600'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                             }`}
                                     >
                                         {tab.label}

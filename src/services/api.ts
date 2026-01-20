@@ -143,35 +143,40 @@ const mapPropertyToRow = (p: Omit<Property, 'id' | 'photoUrl'> | Property) => {
 export const api = {
   login: async (email: string, password_not_hashed: string): Promise<User | null> => {
     // Authenticate with Supabase Auth
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password: password_not_hashed,
-    });
+    // Try Supabase Auth first
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: password_not_hashed,
+      });
 
-    if (error || !data.user) {
-      console.error('Login error:', error);
-      // Fallback to mock users if Supabase auth fails (allows using demo credentials without creating real accounts yet)
-      const mockUser = MOCK_USERS.find(u => u.email === email && u.password_not_hashed === password_not_hashed);
-      if (mockUser) {
-        const { password_not_hashed, ...u } = mockUser;
-        return u;
+      if (!error && data.user) {
+        // Fetch user profile if exists
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+
+        return {
+          id: data.user.id,
+          email: data.user.email!,
+          name: profile?.name || 'User',
+          role: (profile?.role as any) || 'staff'
+        };
       }
-      return null;
+    } catch (e) {
+      console.warn("Supabase login failed or not configured, falling back to mock:", e);
     }
 
-    // Fetch user profile if exists, otherwise mock details
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', data.user.id)
-      .single();
+    // Fallback: Check mock users (for demo/local/offline)
+    const mockUser = MOCK_USERS.find(u => u.email === email && u.password_not_hashed === password_not_hashed);
+    if (mockUser) {
+      const { password_not_hashed, ...u } = mockUser;
+      return u as User;
+    }
 
-    return {
-      id: data.user.id,
-      email: data.user.email!,
-      name: profile?.name || 'User',
-      role: profile?.role || 'staff'
-    };
+    return null;
   },
 
   fetchProperties: async (): Promise<Property[]> => {

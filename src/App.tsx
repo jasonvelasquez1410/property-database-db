@@ -8,6 +8,7 @@ import { Sidebar } from './components/layout/Sidebar';
 import { PropertiesPage } from './components/PropertiesPage';
 import { DocumentsPage } from './components/DocumentsPage';
 import { FinancePage } from './components/FinancePage';
+import { TenantsPage } from './components/TenantsPage';
 
 
 import { Icon } from './components/shared/Icon';
@@ -44,6 +45,7 @@ function App() {
       case 'dashboard': return <DashboardPage user={user!} onLogout={handleLogout} onNavigate={setActivePage} />;
       case 'properties': return <PropertiesPage user={user!} onLogout={handleLogout} />;
       case 'documents': return <DocumentsPage user={user!} />;
+      case 'tenants': return <TenantsPage user={user!} />;
       case 'finance': return <FinancePage user={user!} />;
       case 'settings': return <SettingsPage />;
       case 'help': return <HelpPage />;

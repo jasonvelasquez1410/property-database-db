@@ -68,6 +68,7 @@ export const Sidebar = ({ user, activePage, setActivePage, isOpen, onClose }: Si
                         <NavItem icon="dashboard" label="Dashboard" page="dashboard" activePage={activePage} setActivePage={setActivePage} onClose={onClose} />
                         <NavItem icon="properties" label="Properties" page="properties" activePage={activePage} setActivePage={setActivePage} onClose={onClose} />
                         <NavItem icon="document-text" label="Documents" page="documents" activePage={activePage} setActivePage={setActivePage} onClose={onClose} />
+                        <NavItem icon="user" label="Tenants & Leases" page="tenants" activePage={activePage} setActivePage={setActivePage} onClose={onClose} />
                         <NavItem icon="finance" label="Finance" page="finance" activePage={activePage} setActivePage={setActivePage} onClose={onClose} />
                     </nav>
                     <div className="my-4 border-t"></div>

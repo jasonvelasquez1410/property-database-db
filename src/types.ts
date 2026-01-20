@@ -21,7 +21,7 @@ export enum PaymentStatus {
   FULLY_PAID = 'Fully Paid',
 }
 
-export type Page = 'dashboard' | 'properties' | 'documents' | 'finance' | 'settings' | 'help' | 'admin';
+export type Page = 'dashboard' | 'properties' | 'documents' | 'finance' | 'settings' | 'help' | 'admin' | 'tenants';
 
 export interface User {
   id: string;
@@ -152,4 +152,43 @@ export interface RecentActivity {
   title: string;
   description: string;
   timestamp: string;
+}
+
+export interface Tenant {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  occupation?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  idType?: string;
+  idNumber?: string;
+  status: 'Active' | 'Evicted' | 'Past';
+}
+
+export interface Lease {
+  id: string;
+  propertyId: string;
+  tenantId: string;
+  startDate: string;
+  endDate: string;
+  monthlyRent: number;
+  securityDeposit: number;
+  status: 'Active' | 'Terminated' | 'Expired' | 'Renewed';
+  terms?: string;
+  tenantName?: string; // Helper for UI
+  propertyName?: string; // Helper for UI
+}
+
+export interface PaymentRecord {
+  id: string;
+  leaseId: string;
+  paymentDate: string;
+  amount: number;
+  paymentType: 'Rent' | 'Deposit' | 'Utilities' | 'Other';
+  paymentMethod: 'Cash' | 'Check' | 'Bank Transfer' | 'Gcash';
+  referenceNo?: string;
+  status: 'Completed' | 'Pending' | 'Failed';
+  remarks?: string;
 }

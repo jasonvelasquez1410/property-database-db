@@ -41,8 +41,9 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
             setLeases(fetchedLeases);
             setProperties(fetchedProperties);
             setPayments(fetchedPayments);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to load tenant data", error);
+            // alert("Failed to load initial data: " + (error.message || "Unknown error"));
         } finally {
             setLoading(false);
         }
@@ -57,9 +58,9 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
             setTenants([added, ...tenants]);
             setIsAddTenantOpen(false);
             setNewTenant({ status: 'Active' });
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            alert("Failed to add tenant");
+            alert("Failed to add tenant: " + (error.message || "Please check your network connection."));
         }
     };
 

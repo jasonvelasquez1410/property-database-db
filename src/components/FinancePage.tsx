@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { User, Property, PropertyType, PaymentStatus } from '../types';
+import { useState, useEffect, useMemo } from 'react';
+import { User, Property, PropertyType, PaymentStatus, PaymentRecord } from '../types';
 import { api } from '../services/api';
 import { Icon } from './shared/Icon';
 import { SummaryCard } from './SummaryCard';
@@ -15,9 +15,9 @@ interface FinancePageProps {
     user: User;
 }
 
-export const FinancePage = ({ user }: FinancePageProps) => {
+export const FinancePage = ({ user: _user }: FinancePageProps) => {
     const [properties, setProperties] = useState<Property[]>([]);
-    const [payments, setPayments] = useState<any[]>([]); // Using any for now to match API return, strictly should be PaymentRecord
+    const [payments, setPayments] = useState<PaymentRecord[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [searchTerm, setSearchTerm] = useState('');

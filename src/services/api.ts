@@ -1,5 +1,5 @@
 
-import { User, Property, PropertyType, Location, PaymentStatus, RecentActivity, Documentation, Appraisal, Tenant, Lease, PaymentRecord } from '../types';
+import { User, Property, PropertyType, Location, PaymentStatus, RecentActivity, Documentation, Tenant, Lease, PaymentRecord } from '../types';
 import { supabase } from './supabaseClient';
 
 // Mock user database
@@ -10,7 +10,8 @@ const MOCK_USERS: (User & { password_not_hashed: string })[] = [
 ];
 
 // Helper to map DB row to Property object
-const mapRowToProperty = (row: any): Property => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mapRowToProperty = (row: Record<string, any>): Property => {
   return {
     id: row.id,
     propertyName: row.property_name,
@@ -271,7 +272,7 @@ export const api = {
       fileName: d.file_name,
       propertyId: d.property_id,
       propertyName: d.properties?.property_name || 'Unknown Property'
-    })).sort((a: any, b: any) => (a.priority === 'High' ? -1 : 1));
+    })).sort((a: any, _b: any) => (a.priority === 'High' ? -1 : 1));
   },
 
   addProperty: async (propertyData: Omit<Property, 'id' | 'photoUrl'>): Promise<Property> => {
@@ -320,7 +321,7 @@ export const api = {
   },
 
   addDocumentToProperty: async (propertyId: string, doc: Omit<Documentation, 'propertyId' | 'propertyName'>): Promise<Property> => {
-    const { data, error } = await supabase
+    const { data: _data, error } = await supabase
       .from('documents')
       .insert([{
         property_id: propertyId,
@@ -354,52 +355,115 @@ export const api = {
     // For production, this should be disabled or protected.
     // But for this "transition" phase, it's useful to populate the DB.
 
-    // 1. Clear Tables
-    await supabase.from('documents').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
-    await supabase.from('appraisals').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    await supabase.from('properties').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    try {
+      // 1. Clear Tables (Order matters due to foreign keys)
+      await supabase.from('payments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('leases').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('tenants').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('documents').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('appraisals').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('properties').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
-    // 2. Insert Demo Properties (The mapped objects from the OLD api.ts)
-    const demoProps = [
-      {
-        property_name: 'Makati Prime Condominium Unit',
-        property_type: 'Condominium',
-        full_address: '123 Ayala Ave, Makati, Metro Manila',
-        location: 'Luzon',
-        gps_coordinates: '14.5547, 121.0244',
-        video_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        unit_number: '18A', floor_number: '18th Floor', lot_no: 'Unit 18A, Tower 1', tct_or_cct_no: 'CCT-12345',
-        area_sqm: 85, original_developer: 'Ayala Land Premier', brokers_name: 'Jane Doe Realty', brokers_contact: '0917-123-4567', buyers_name: 'John Smith',
-        photo_url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80',
-        acquisition_unit_lot_cost: 15000000, acquisition_total_cost: 15000000,
-        payment_status: 'Fully Paid',
-        possession_is_turned_over: true, possession_turnover_date: '2022-02-01', possession_authorized_recipient: 'John Smith',
-        insurance_amount_insured: 10000000, insurance_company: 'AXA Philippines', insurance_coverage_date: '2024-01-01',
-        real_estate_tax_last_paid: '2024-01-10', real_estate_tax_amount: 45000,
-        condo_dues_last_paid: '2024-07-05', condo_dues_amount: 8500
-      },
-      {
-        property_name: 'BGC Corporate Office Suite',
-        property_type: 'Commercial Building', // Mapped from Enum or string
-        full_address: '25th Street, Bonifacio Global City, Taguig',
-        location: 'Luzon',
-        gps_coordinates: '14.5492, 121.0505',
-        video_url: 'https://www.youtube.com/watch?v=LXb3EKWsInQ',
-        unit_number: '2405', floor_number: '24th Floor', lot_no: 'Unit 2405, Ecoplaza', tct_or_cct_no: 'CCT-98765',
-        area_sqm: 120, original_developer: 'Megaworld', brokers_name: 'BGC Realtors', brokers_contact: '0918-555-0000', buyers_name: 'Tech Solutions Inc.',
-        photo_url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-        acquisition_unit_lot_cost: 25000000, acquisition_total_cost: 28000000, acquisition_fit_out_cost: 3000000,
-        payment_status: 'Fully Paid',
-        possession_is_turned_over: true, possession_turnover_date: '2023-05-15', possession_authorized_recipient: 'CEO Tech Solutions',
-        insurance_amount_insured: 30000000, insurance_company: 'Malayan Insurance',
-        real_estate_tax_last_paid: '2024-01-15', real_estate_tax_amount: 65000,
-        condo_dues_last_paid: '2024-07-01', condo_dues_amount: 12000,
-        lease_lessee: 'StartUp Hub', lease_date: '2023-08-01', lease_rate: 150000, lease_term_years: 3
+      // 2. Insert Demo Properties
+      const demoProps = [
+        {
+          property_name: 'Makati Prime Condominium Unit',
+          property_type: 'Condominium',
+          full_address: '123 Ayala Ave, Makati, Metro Manila',
+          location: 'Luzon',
+          gps_coordinates: '14.5547, 121.0244',
+          unit_number: '18A', floor_number: '18th Floor', lot_no: 'Unit 18A, Tower 1', tct_or_cct_no: 'CCT-12345',
+          area_sqm: 85, original_developer: 'Ayala Land Premier', brokers_name: 'Jane Doe Realty', brokers_contact: '0917-123-4567', buyers_name: 'John Smith',
+          photo_url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80',
+          acquisition_unit_lot_cost: 15000000, acquisition_total_cost: 15000000,
+          payment_status: 'Fully Paid',
+          possession_is_turned_over: true, possession_turnover_date: '2022-02-01', possession_authorized_recipient: 'John Smith',
+          insurance_amount_insured: 10000000, insurance_company: 'AXA Philippines', insurance_coverage_date: '2024-01-01',
+          real_estate_tax_last_paid: '2024-01-10', real_estate_tax_amount: 45000,
+          condo_dues_last_paid: '2024-07-05', condo_dues_amount: 8500
+        },
+        {
+          property_name: 'BGC Corporate Office Suite',
+          property_type: 'Commercial',
+          full_address: '25th Street, Bonifacio Global City, Taguig',
+          location: 'Luzon',
+          gps_coordinates: '14.5492, 121.0505',
+          unit_number: '2405', floor_number: '24th Floor', lot_no: 'Unit 2405, Ecoplaza', tct_or_cct_no: 'CCT-98765',
+          area_sqm: 120, original_developer: 'Megaworld', brokers_name: 'BGC Realtors', brokers_contact: '0918-555-0000', buyers_name: 'Tech Solutions Inc.',
+          photo_url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+          acquisition_unit_lot_cost: 25000000, acquisition_total_cost: 28000000, acquisition_fit_out_cost: 3000000,
+          payment_status: 'Fully Paid',
+          possession_is_turned_over: true, possession_turnover_date: '2023-05-15', possession_authorized_recipient: 'CEO Tech Solutions',
+          insurance_amount_insured: 30000000, insurance_company: 'Malayan Insurance',
+          real_estate_tax_last_paid: '2024-01-15', real_estate_tax_amount: 65000,
+          condo_dues_last_paid: '2024-07-01', condo_dues_amount: 12000
+        }
+      ];
+
+      const { data: insertedProps, error: propError } = await supabase.from('properties').insert(demoProps).select();
+      if (propError) throw propError;
+
+      // 3. Insert Demo Tenants
+      const demoTenants = [
+        { name: 'StartUp Hub Inc.', email: 'contact@startuphub.com', phone: '0917-000-1111', status: 'Active', occupation: 'Tech Company' },
+        { name: 'Dr. Emily Rose', email: 'emily.rose@hospital.com', phone: '0918-222-3333', status: 'Active', occupation: 'Physician' }
+      ];
+
+      const { data: insertedTenants, error: tenantError } = await supabase.from('tenants').insert(demoTenants).select();
+      if (tenantError) throw tenantError;
+
+      // 4. Create Leases (Linking Property 1 to Tenant 2, Property 2 to Tenant 1)
+      if (insertedProps && insertedTenants) {
+        // Lease 1: BGC Office (Prop[1]) leased to StartUp Hub (Tenant[0])
+        const lease1 = {
+          property_id: insertedProps[1].id,
+          tenant_id: insertedTenants[0].id,
+          start_date: '2023-08-01',
+          end_date: '2026-08-01',
+          monthly_rent: 150000,
+          security_deposit: 450000,
+          status: 'Active',
+          terms: '3 Years Fixed',
+          contract_url: '#'
+        };
+
+        // Lease 2: Makati Condo (Prop[0]) leased to Dr. Emily (Tenant[1])
+        const lease2 = {
+          property_id: insertedProps[0].id,
+          tenant_id: insertedTenants[1].id,
+          start_date: '2024-01-01',
+          end_date: '2025-01-01',
+          monthly_rent: 85000,
+          security_deposit: 170000,
+          status: 'Active',
+          terms: '1 Year Renewable',
+          contract_url: '#'
+        };
+
+        const { data: insertedLeases, error: leaseError } = await supabase.from('leases').insert([lease1, lease2]).select();
+        if (leaseError) throw leaseError;
+
+        // 5. Create Payment History (Mock some payments)
+        if (insertedLeases) {
+          const payments = [
+            // Payments for Lease 1 (BGC)
+            { lease_id: insertedLeases[0].id, payment_date: '2024-01-01', amount: 150000, payment_type: 'Rent', status: 'Completed', payment_method: 'Check' },
+            { lease_id: insertedLeases[0].id, payment_date: '2024-02-01', amount: 150000, payment_type: 'Rent', status: 'Completed', payment_method: 'Check' },
+            { lease_id: insertedLeases[0].id, payment_date: '2024-03-01', amount: 150000, payment_type: 'Rent', status: 'Pending', payment_method: 'Check', remarks: 'Check for deposit' }, // Pending for dashboard
+
+            // Payments for Lease 2 (Makati)
+            { lease_id: insertedLeases[1].id, payment_date: '2024-01-05', amount: 85000, payment_type: 'Rent', status: 'Completed', payment_method: 'Bank Transfer' },
+            { lease_id: insertedLeases[1].id, payment_date: '2024-02-05', amount: 85000, payment_type: 'Rent', status: 'Completed', payment_method: 'Bank Transfer' }
+          ];
+          await supabase.from('payments').insert(payments);
+        }
       }
-    ];
 
-    await supabase.from('properties').insert(demoProps);
-    window.location.reload();
+      window.location.reload();
+    } catch (error: any) {
+      console.error("Reset Failed:", error);
+      alert("Failed to reset data. Check console.");
+    }
   },
 
   // --- Tenant & Lease Management ---
@@ -440,16 +504,7 @@ export const api = {
 
   addLease: async (lease: Omit<Lease, 'id'>): Promise<Lease> => {
     // Ensure numeric values are numbers
-    const payload = {
-      ...lease,
-      monthly_rent: lease.monthlyRent,
-      security_deposit: lease.securityDeposit,
-      property_id: lease.propertyId,
-      tenant_id: lease.tenantId,
-      start_date: lease.startDate,
-      end_date: lease.endDate,
-      contract_url: lease.contractUrl
-    };
+    // Payload used to be here but was unused.
 
     // We need to map back to snake_case for Supabase if we didn't use the JS client's auto-mapping (which we might not have set up)
     // Actually, standard supabase client matches JSON keys if table columns match. 

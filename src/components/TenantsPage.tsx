@@ -85,7 +85,7 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
                 const end = new Date(newLease.endDate);
                 const pdcsToCreate: Partial<PaymentRecord>[] = [];
 
-                let current = new Date(start);
+                const current = new Date(start);
                 // Move to next month for the first payment if rent is paid in advance? 
                 // Usually first payment is immediate. Let's assume start date is first payment.
 
@@ -104,7 +104,7 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
                 }
 
                 // Add all to database (in parallel for speed)
-                const paymentPromises = pdcsToCreate.map(p => api.addPayment(p));
+                const paymentPromises = pdcsToCreate.map(p => api.addPayment(p as Omit<PaymentRecord, 'id'>));
                 const createdPayments = await Promise.all(paymentPromises);
 
                 // Update local state
@@ -692,6 +692,112 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
                                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                                 >
                                     Create Lease
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* Add Payment Modal */}
+            {isAddPaymentOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 max-h-[85vh] overflow-y-auto">
+                        <h2 className="text-xl font-bold mb-4">Record Payment</h2>
+                        <form onSubmit={handleAddPayment} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Lease (Tenant - Property)</label>
+                                <select
+                                    required
+                                    className="mt-1 w-full border border-gray-300 rounded-md p-2"
+                                    value={newPayment.leaseId || ''}
+                                    onChange={e => setNewPayment({ ...newPayment, leaseId: e.target.value })}
+                                >
+                                    <option value="">Select Lease</option>
+                                    {leases.map(l => (
+                                        <option key={l.id} value={l.id}>{l.tenantName} - {l.propertyName}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Date</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        className="mt-1 w-full border border-gray-300 rounded-md p-2"
+                                        value={newPayment.paymentDate}
+                                        onChange={e => setNewPayment({ ...newPayment, paymentDate: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Amount</label>
+                                    <input
+                                        type="number"
+                                        required
+                                        className="mt-1 w-full border border-gray-300 rounded-md p-2"
+                                        value={newPayment.amount}
+                                        onChange={e => setNewPayment({ ...newPayment, amount: Number(e.target.value) })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Type</label>
+                                    <select
+                                        className="mt-1 w-full border border-gray-300 rounded-md p-2"
+                                        value={newPayment.paymentType || 'Rent'}
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                        onChange={e => setNewPayment({ ...newPayment, paymentType: e.target.value as any })}
+                                    >
+                                        <option value="Rent">Rent</option>
+                                        <option value="Security Deposit">Security Deposit</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Method</label>
+                                    <select
+                                        className="mt-1 w-full border border-gray-300 rounded-md p-2"
+                                        value={newPayment.paymentMethod || 'Cash'}
+                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                        onChange={e => setNewPayment({ ...newPayment, paymentMethod: e.target.value as any })}
+                                    >
+                                        <option value="Cash">Cash</option>
+                                        <option value="Check">Check</option>
+                                        <option value="Bank Transfer">Bank Transfer</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Reference No.</label>
+                                <input
+                                    type="text"
+                                    className="mt-1 w-full border border-gray-300 rounded-md p-2"
+                                    value={newPayment.referenceNo || ''}
+                                    onChange={e => setNewPayment({ ...newPayment, referenceNo: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Remarks</label>
+                                <textarea
+                                    className="mt-1 w-full border border-gray-300 rounded-md p-2"
+                                    value={newPayment.remarks || ''}
+                                    onChange={e => setNewPayment({ ...newPayment, remarks: e.target.value })}
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsAddPaymentOpen(false)}
+                                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                >
+                                    Record Payment
                                 </button>
                             </div>
                         </form>

@@ -71,7 +71,7 @@ export const PropertyFormModal = ({ onClose, onSubmit, property, loading }: Prop
                 return rest;
             });
         }
-    }, [hasLease]);
+    }, [hasLease, propertyData.lease]);
 
     useEffect(() => {
         if (hasInsurance && !propertyData.insurance) {
@@ -82,7 +82,7 @@ export const PropertyFormModal = ({ onClose, onSubmit, property, loading }: Prop
                 return rest;
             });
         }
-    }, [hasInsurance]);
+    }, [hasInsurance, propertyData.insurance]);
 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -93,7 +93,7 @@ export const PropertyFormModal = ({ onClose, onSubmit, property, loading }: Prop
         setPropertyData(prev => ({ ...prev, [name]: parsedValue }));
     };
 
-    const handleNestedChange = (section: keyof typeof propertyData, field: string, value: any) => {
+    const handleNestedChange = (section: keyof typeof propertyData, field: string, value: string | number | boolean | string[]) => {
         setPropertyData(prev => ({
             ...prev,
             [section]: {

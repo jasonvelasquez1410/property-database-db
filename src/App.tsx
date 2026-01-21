@@ -15,6 +15,8 @@ import { TenantsPage } from './components/TenantsPage';
 
 import { SettingsPage } from './components/SettingsPage';
 
+import { TeamPage } from './components/TeamPage';
+
 // Placeholder pages for navigation demonstration
 const PlaceholderPage = ({ title }: { title: string }) => (
   <div className="p-8">
@@ -50,7 +52,7 @@ function App() {
       case 'finance': return <FinancePage user={user!} />;
       case 'settings': return <SettingsPage />;
       case 'help': return <HelpPage />;
-      case 'admin': return <AdminPage />;
+      case 'admin': return <TeamPage user={user!} onLogout={handleLogout} onNavigate={setActivePage} />;
       default: return <DashboardPage user={user!} onLogout={handleLogout} />;
     }
   };

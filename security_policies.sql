@@ -52,9 +52,9 @@ DROP POLICY IF EXISTS "Allow anonymous update payments" ON payments;
 CREATE POLICY "Profiles View" ON public.profiles
 FOR SELECT USING (auth.uid() = id OR get_my_role() = 'admin');
 
--- Update: Users can update their own profile
+-- Update: Users can update their own profile. Admins can update any profile.
 CREATE POLICY "Profiles Update" ON public.profiles
-FOR UPDATE USING (auth.uid() = id);
+FOR UPDATE USING (auth.uid() = id OR get_my_role() = 'admin');
 
 -- =========================================================================
 -- 2. PROPERTIES (High Value Assets)

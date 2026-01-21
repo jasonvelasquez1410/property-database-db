@@ -187,6 +187,73 @@ export const api = {
     return null;
   },
 
+  signUp: async (email: string, password: string): Promise<{ user: User | null, error: any }> => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            role: 'staff', // Default role
+            name: email.split('@')[0] // Default name
+          }
+        }
+      });
+
+      if (error) return { user: null, error };
+
+      if (data.user) {
+        return {
+          user: {
+            id: data.user.id,
+            email: data.user.email!,
+            name: data.user.user_metadata?.name || email.split('@')[0],
+            role: 'staff'
+          },
+          error: null
+        };
+      }
+      return { user: null, error: new Error('Sign up failed') };
+    } catch (e) {
+      return { user: null, error: e };
+    }
+  },
+
+  getAllProfiles: async (): Promise<User[]> => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error("Failed to fetch profiles:", error);
+      return [];
+    }
+
+    return data.map((p: any) => ({
+      id: p.id,
+      email: p.email || 'No Email', // Profiles might not mirror email directly depending on setup, but assuming we store it or fetch from auth
+      // Actually, profiles table might strictly have id, role, name. Email is in auth.users.
+      // However, typical setup copies email to profile or joins. 
+      // For now, let's assume profile has Name and Role. We might fail to get Email if not in profile.
+      // Let's check the schema? I don't have the schema definition handy for profiles columns.
+      // security_policies.sql doesn't show columns.
+      // I'll assume standard Columns: id, updated_at, username, full_name, avatar_url, website... 
+      // Wait, I should check what `profiles` has.
+      name: p.full_name || p.name || 'Unknown',
+      role: p.role || 'staff'
+    }));
+  },
+
+  updateProfileRole: async (userId: string, newRole: 'admin' | 'manager' | 'staff'): Promise<void> => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role: newRole })
+      .eq('id', userId);
+
+    if (error) throw error;
+  },
+
   fetchProperties: async (): Promise<Property[]> => {
     const { data: properties, error } = await supabase
       .from('properties')

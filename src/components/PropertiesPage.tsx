@@ -3,6 +3,7 @@ import { User, Property, PropertyType, Location, PaymentStatus } from '../types'
 import { api } from '../services/api';
 import { Icon } from './shared/Icon';
 import { PropertyTable } from './PropertyTable';
+import { PropertyCard } from './PropertyCard';
 import { PropertyDetailModal } from './PropertyDetailModal';
 import { PropertyFormModal } from './PropertyFormModal';
 import { PROPERTY_TYPES, LOCATIONS } from '../constants';
@@ -192,12 +193,33 @@ export const PropertiesPage = ({ user, onLogout }: PropertiesPageProps) => {
 
       <div className="bg-white rounded-xl shadow overflow-hidden relative">
         {loading && <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10"><p>Loading properties...</p></div>}
-        <PropertyTable
-          properties={filteredProperties}
-          user={user}
-          onSelectProperty={setSelectedProperty}
-          onEditProperty={handleOpenEditModal}
-        />
+
+        {/* Desktop View: Table */}
+        <div className="hidden md:block">
+          <PropertyTable
+            properties={filteredProperties}
+            user={user}
+            onSelectProperty={setSelectedProperty}
+            onEditProperty={handleOpenEditModal}
+          />
+        </div>
+
+        {/* Mobile View: Cards */}
+        <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50">
+          {filteredProperties.map(property => (
+            <PropertyCard
+              key={property.id}
+              property={property}
+              onClick={() => setSelectedProperty(property)}
+              onEdit={user.role === 'admin' || user.role === 'manager' ? (e) => handleOpenEditModal(property) : undefined}
+            />
+          ))}
+          {filteredProperties.length === 0 && (
+            <div className="text-center py-10 text-gray-500 col-span-full">
+              No properties found matching your search.
+            </div>
+          )}
+        </div>
       </div>
 
       {selectedProperty && (

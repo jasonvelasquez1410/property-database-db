@@ -5,13 +5,14 @@ import { User, Page } from './types';
 import { LoginPage } from './components/LoginPage';
 import { DashboardPage } from './components/DashboardPage';
 import { Sidebar } from './components/layout/Sidebar';
+import { MobileBottomNav } from './components/layout/MobileBottomNav';
 import { PropertiesPage } from './components/PropertiesPage';
 import { DocumentsPage } from './components/DocumentsPage';
 import { FinancePage } from './components/FinancePage';
 import { TenantsPage } from './components/TenantsPage';
 
 
-import { Icon } from './components/shared/Icon';
+
 import { SettingsPage } from './components/SettingsPage';
 
 // Placeholder pages for navigation demonstration
@@ -67,23 +68,30 @@ function App() {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile Header */}
-        <div className="md:hidden bg-white border-b p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setIsSidebarOpen(true)} className="text-gray-500 hover:text-gray-700">
-              <Icon type="more-horizontal" className="w-6 h-6" />
-            </button>
-            <span className="font-bold text-lg text-gray-800">SVMPROPERTIES</span>
-          </div>
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 font-bold text-sm">
-            {user.name.charAt(0)}
-          </div>
-        </div>
 
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        {/* Mobile Header (Simplified) */}
+        {!isSidebarOpen && (
+          <div className="md:hidden bg-white border-b p-4 flex items-center justify-between sticky top-0 z-10">
+            <div className="flex items-center gap-3">
+              <img src="/svm-logo.jpg" alt="SVM Logo" className="h-8 w-8 object-cover rounded-full" />
+              <span className="font-bold text-lg text-gray-800">SVMPROPERTIES</span>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-800 font-bold text-sm">
+              {user.name.charAt(0)}
+            </div>
+          </div>
+        )}
+
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 pb-20 md:pb-0">
           {renderPage()}
         </main>
+
+        <MobileBottomNav
+          activePage={activePage}
+          setActivePage={setActivePage}
+          onMenuClick={() => setIsSidebarOpen(true)}
+        />
       </div>
     </div>
   );

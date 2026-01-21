@@ -39,7 +39,7 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
           <div className="flex justify-center mb-4">
             <img src="/svm-logo.jpg" alt="SVM Properties Logo" className="h-24 w-auto rounded-full object-cover border-4 border-gray-100" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-900">SVM Properties Inc.</h2>
+          <h2 className="text-3xl font-bold text-gray-900">SVMPROPERTIES</h2>
           <p className="mt-2 text-lg text-gray-500">Property Management System</p>
         </div>
         <form className="space-y-6" onSubmit={handleSubmit}>

@@ -3,6 +3,7 @@ import { User, Property, RecentActivity, Documentation as DocType, Location } fr
 import { api } from '../services/api';
 import { PropertyFormModal } from './PropertyFormModal';
 import { SummaryCard } from './SummaryCard';
+import { Icon } from './shared/Icon';
 import { Header } from './layout/Header';
 import { RecentActivityWidget } from './dashboard/RecentActivityWidget';
 import { PendingDocumentsWidget } from './dashboard/PendingDocumentsWidget';
@@ -93,6 +94,37 @@ export const DashboardPage = ({ user, onLogout, onNavigate }: DashboardPageProps
         <div className="mt-8">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="mt-1 text-md text-gray-600">Welcome back, {user.name}! Here’s an overview of your property portfolio.</p>
+        </div>
+
+        {/* Mobile Widget Menu - Visible only on mobile */}
+        <div className="md:hidden grid grid-cols-2 gap-4 mt-6 mb-8">
+          <div onClick={() => onNavigate('properties')} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform">
+            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+              <Icon type="properties" className="w-6 h-6" />
+            </div>
+            <span className="font-semibold text-gray-800">Properties</span>
+          </div>
+
+          <div onClick={() => onNavigate('tenants')} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform">
+            <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+              <Icon type="users" className="w-6 h-6" />
+            </div>
+            <span className="font-semibold text-gray-800">Tenants</span>
+          </div>
+
+          <div onClick={() => onNavigate('finance')} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform">
+            <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center">
+              <Icon type="chart-pie" className="w-6 h-6" />
+            </div>
+            <span className="font-semibold text-gray-800">Finance</span>
+          </div>
+
+          <div onClick={() => onNavigate('documents')} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform">
+            <div className="w-12 h-12 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center">
+              <Icon type="document" className="w-6 h-6" />
+            </div>
+            <span className="font-semibold text-gray-800">Documents</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">

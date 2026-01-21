@@ -1,6 +1,6 @@
 import React from 'react';
 
-type IconType = 'logout' | 'filter' | 'document' | 'location' | 'close' | 'user' | 'lock' | 'plus' | 'trash' | 'dollar-circle' | 'building-office' | 'chart-pie' | 'globe-alt' | 'upload' | 'edit' | 'dashboard' | 'properties' | 'finance' | 'settings' | 'help' | 'admin' | 'bell' | 'chevron-down' | 'chevron-up' | 'arrow-trending-up' | 'arrow-trending-down' | 'exclamation-triangle' | 'calendar-days' | 'eye' | 'upload-cloud' | 'document-text' | 'more-horizontal' | 'export' | 'copy' | 'chevron-right' | 'search' | 'file-text' | 'bar-chart' | 'pie-chart-alt' | 'line-chart' | 'map-pin' | 'video' | 'menu' | 'image';
+type IconType = 'logout' | 'filter' | 'document' | 'location' | 'close' | 'user' | 'users' | 'lock' | 'plus' | 'trash' | 'dollar-circle' | 'building-office' | 'chart-pie' | 'globe-alt' | 'upload' | 'edit' | 'dashboard' | 'properties' | 'finance' | 'settings' | 'help' | 'admin' | 'bell' | 'chevron-down' | 'chevron-up' | 'arrow-trending-up' | 'arrow-trending-down' | 'exclamation-triangle' | 'calendar-days' | 'eye' | 'upload-cloud' | 'document-text' | 'more-horizontal' | 'export' | 'copy' | 'chevron-right' | 'search' | 'file-text' | 'bar-chart' | 'pie-chart-alt' | 'line-chart' | 'map-pin' | 'video' | 'menu' | 'image';
 
 interface IconProps {
   type: IconType;
@@ -52,6 +52,7 @@ const ICONS: Record<IconType, React.ReactNode> = {
   video: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" /></svg>,
   menu: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>,
   image: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008H12.75V7.5h-.008z" /></svg>,
+  users: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>,
 };
 
 export const Icon = ({ type, className = 'w-6 h-6' }: IconProps) => {

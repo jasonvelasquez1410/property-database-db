@@ -30,11 +30,13 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
           onLoginSuccess(user);
         }
       } else {
-        const user = await api.login(email, password);
+        const { user, error } = await api.login(email, password);
         if (user) {
           onLoginSuccess(user);
         } else {
-          setError('Invalid email or password.');
+          // Show specific error message from Supabase (e.g., "Email not confirmed", "Invalid login credentials")
+          setError(error?.message || 'Invalid email or password.');
+          console.error("Login Result:", error);
         }
       }
     } catch (err: any) {

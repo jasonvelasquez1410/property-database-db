@@ -149,7 +149,7 @@ const mapPropertyToRow = (p: Omit<Property, 'id' | 'photoUrl'> | Property) => {
 };
 
 export const api = {
-  login: async (email: string, password_not_hashed: string): Promise<User | null> => {
+  login: async (email: string, password_not_hashed: string): Promise<{ user: User | null, error: any }> => {
     // Authenticate with Supabase Auth
     const normalizedEmail = email.toLowerCase();
 
@@ -160,7 +160,11 @@ export const api = {
         password: password_not_hashed,
       });
 
-      if (!error && data.user) {
+      if (error) {
+        return { user: null, error };
+      }
+
+      if (data.user) {
         // Fetch user profile if exists
         const { data: profile } = await supabase
           .from('profiles')
@@ -169,10 +173,13 @@ export const api = {
           .single();
 
         return {
-          id: data.user.id,
-          email: data.user.email!,
-          name: profile?.name || 'User',
-          role: (profile?.role as any) || 'staff'
+          user: {
+            id: data.user.id,
+            email: data.user.email!,
+            name: profile?.name || 'User',
+            role: (profile?.role as any) || 'staff'
+          },
+          error: null
         };
       }
     } catch (e) {
@@ -183,10 +190,10 @@ export const api = {
     const mockUser = MOCK_USERS.find(u => u.email === normalizedEmail && u.password_not_hashed === password_not_hashed);
     if (mockUser) {
       const { password_not_hashed, ...u } = mockUser;
-      return u as User;
+      return { user: u as User, error: null };
     }
 
-    return null;
+    return { user: null, error: new Error('Invalid email or password') };
   },
 
   signUp: async (email: string, password: string): Promise<{ user: User | null, error: any }> => {

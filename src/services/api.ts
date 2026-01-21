@@ -151,10 +151,12 @@ const mapPropertyToRow = (p: Omit<Property, 'id' | 'photoUrl'> | Property) => {
 export const api = {
   login: async (email: string, password_not_hashed: string): Promise<User | null> => {
     // Authenticate with Supabase Auth
+    const normalizedEmail = email.toLowerCase();
+
     // Try Supabase Auth first
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: normalizedEmail,
         password: password_not_hashed,
       });
 
@@ -178,7 +180,7 @@ export const api = {
     }
 
     // Fallback: Check mock users (for demo/local/offline)
-    const mockUser = MOCK_USERS.find(u => u.email === email && u.password_not_hashed === password_not_hashed);
+    const mockUser = MOCK_USERS.find(u => u.email === normalizedEmail && u.password_not_hashed === password_not_hashed);
     if (mockUser) {
       const { password_not_hashed, ...u } = mockUser;
       return u as User;
@@ -188,14 +190,15 @@ export const api = {
   },
 
   signUp: async (email: string, password: string): Promise<{ user: User | null, error: any }> => {
+    const normalizedEmail = email.toLowerCase();
     try {
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: normalizedEmail,
         password,
         options: {
           data: {
             role: 'staff', // Default role
-            name: email.split('@')[0] // Default name
+            name: normalizedEmail.split('@')[0] // Default name
           }
         }
       });
@@ -207,7 +210,7 @@ export const api = {
           user: {
             id: data.user.id,
             email: data.user.email!,
-            name: data.user.user_metadata?.name || email.split('@')[0],
+            name: data.user.user_metadata?.name || normalizedEmail.split('@')[0],
             role: 'staff'
           },
           error: null

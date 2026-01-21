@@ -1,12 +1,15 @@
 import React from 'react';
-import { Property, PaymentStatus } from '../types';
+import { Property, PaymentStatus, User } from '../types';
 import { Icon } from './shared/Icon';
 
 interface PropertyTableProps {
     properties: Property[];
+    user: User;
     onSelectProperty: (property: Property) => void;
     onEditProperty: (property: Property) => void;
 }
+
+import { Property, PaymentStatus, User } from '../types';
 
 const formatCurrency = (amount?: number) => {
     if (typeof amount !== 'number') return 'N/A';
@@ -24,8 +27,8 @@ const getStatusTags = (property: Property) => {
     if (property.payment.status === PaymentStatus.AMORTIZED) {
         tags.push({ text: 'Amortized', className: 'bg-yellow-100 text-yellow-800' });
     }
-    
-    if(property.documentation.pendingDocuments.length > 0) {
+
+    if (property.documentation.pendingDocuments.length > 0) {
         tags.push({ text: 'Non-Compliant', className: 'bg-red-100 text-red-800' });
     }
 
@@ -41,7 +44,7 @@ const SortableHeader = ({ label, sortable = true }: { label: string, sortable?: 
     </th>
 )
 
-export const PropertyTable = ({ properties, onSelectProperty, onEditProperty }: PropertyTableProps) => {
+export const PropertyTable = ({ properties, user, onSelectProperty, onEditProperty }: PropertyTableProps) => {
 
     if (properties.length === 0) {
         return <p className="text-center py-16 text-gray-600">No properties found for the selected filters.</p>
@@ -69,11 +72,11 @@ export const PropertyTable = ({ properties, onSelectProperty, onEditProperty }: 
                 <tbody className="bg-white divide-y divide-gray-200">
                     {properties.map((property) => {
                         const statusTags = getStatusTags(property);
-                        const latestAppraisal = property.appraisals?.sort((a,b) => new Date(b.appraisalDate).getTime() - new Date(a.appraisalDate).getTime())[0];
+                        const latestAppraisal = property.appraisals?.sort((a, b) => new Date(b.appraisalDate).getTime() - new Date(a.appraisalDate).getTime())[0];
                         return (
                             <tr key={property.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4">
-                                     <input type="checkbox" className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                                    <input type="checkbox" className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="text-sm font-medium text-blue-600 hover:underline cursor-pointer" onClick={() => onSelectProperty(property)}>{property.propertyName}</div>
@@ -85,7 +88,7 @@ export const PropertyTable = ({ properties, onSelectProperty, onEditProperty }: 
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex flex-col items-start gap-1">
                                         {statusTags.map(tag => (
-                                             <span key={tag.text} className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${tag.className}`}>
+                                            <span key={tag.text} className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${tag.className}`}>
                                                 {tag.text}
                                             </span>
                                         ))}
@@ -93,9 +96,11 @@ export const PropertyTable = ({ properties, onSelectProperty, onEditProperty }: 
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div className="flex items-center gap-2">
-                                        <button onClick={() => onSelectProperty(property)} className="text-gray-400 hover:text-blue-600 p-1.5 rounded-md hover:bg-gray-100" title="View"><Icon type="eye" className="w-5 h-5"/></button>
-                                        <button onClick={() => onEditProperty(property)} className="text-gray-400 hover:text-yellow-600 p-1.5 rounded-md hover:bg-gray-100" title="Edit"><Icon type="edit" className="w-5 h-5"/></button>
-                                        <button className="text-gray-400 hover:text-gray-600 p-1.5 rounded-md hover:bg-gray-100" title="Copy"><Icon type="copy" className="w-5 h-5"/></button>
+                                        <button onClick={() => onSelectProperty(property)} className="text-gray-400 hover:text-blue-600 p-1.5 rounded-md hover:bg-gray-100" title="View"><Icon type="eye" className="w-5 h-5" /></button>
+                                        {(user.role === 'admin' || user.role === 'manager') && (
+                                            <button onClick={() => onEditProperty(property)} className="text-gray-400 hover:text-yellow-600 p-1.5 rounded-md hover:bg-gray-100" title="Edit"><Icon type="edit" className="w-5 h-5" /></button>
+                                        )}
+                                        <button className="text-gray-400 hover:text-gray-600 p-1.5 rounded-md hover:bg-gray-100" title="Copy"><Icon type="copy" className="w-5 h-5" /></button>
                                     </div>
                                 </td>
                             </tr>

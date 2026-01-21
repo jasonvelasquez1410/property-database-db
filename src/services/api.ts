@@ -310,6 +310,15 @@ export const api = {
     return mapRowToProperty(data);
   },
 
+  deleteProperty: async (propertyId: string): Promise<void> => {
+    const { error } = await supabase
+      .from('properties')
+      .delete()
+      .eq('id', propertyId);
+
+    if (error) throw error;
+  },
+
   addDocumentToProperty: async (propertyId: string, doc: Omit<Documentation, 'propertyId' | 'propertyName'>): Promise<Property> => {
     const { data, error } = await supabase
       .from('documents')
@@ -541,5 +550,20 @@ export const api = {
     // Clears user's view for now, or deletes from DB?
     // Safety: maybe just reload
     window.location.reload();
+  },
+
+  deleteTenant: async (id: string): Promise<void> => {
+    const { error } = await supabase.from('tenants').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  deleteLease: async (id: string): Promise<void> => {
+    const { error } = await supabase.from('leases').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  deletePayment: async (id: string): Promise<void> => {
+    const { error } = await supabase.from('payments').delete().eq('id', id);
+    if (error) throw error;
   }
 };

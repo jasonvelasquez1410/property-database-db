@@ -276,7 +276,23 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    <button className="text-blue-600 hover:text-blue-900">Edit</button>
+                                                    {(user.role === 'admin' || user.role === 'manager') && (
+                                                        <div className="flex justify-end gap-2">
+                                                            <button className="text-blue-600 hover:text-blue-900">Edit</button>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    if (!window.confirm("Delete this tenant?")) return;
+                                                                    try {
+                                                                        await api.deleteTenant(tenant.id);
+                                                                        setTenants(prev => prev.filter(t => t.id !== tenant.id));
+                                                                    } catch (e) { console.error(e); alert("Failed to delete"); }
+                                                                }}
+                                                                className="text-red-600 hover:text-red-900"
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
@@ -337,17 +353,36 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
                                                         </span>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                        {lease.contractUrl && (
-                                                            <a
-                                                                href={lease.contractUrl}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="text-blue-600 hover:text-blue-900 flex items-center justify-end gap-1"
-                                                            >
-                                                                <Icon type="document-text" className="w-4 h-4" />
-                                                                View Contract
-                                                            </a>
-                                                        )}
+                                                        <div className="flex items-center justify-end gap-3">
+                                                            {lease.contractUrl && (
+                                                                <a
+                                                                    href={lease.contractUrl}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-blue-600 hover:text-blue-900 flex items-center gap-1"
+                                                                >
+                                                                    <Icon type="document-text" className="w-4 h-4" />
+                                                                    View
+                                                                </a>
+                                                            )}
+                                                            {(user.role === 'admin' || user.role === 'manager') && (
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        if (!window.confirm("Delete this lease?")) return;
+                                                                        try {
+                                                                            await api.deleteLease(lease.id);
+                                                                            setLeases(prev => prev.filter(l => l.id !== lease.id));
+                                                                        } catch (e) {
+                                                                            console.error(e);
+                                                                            alert("Failed to delete lease");
+                                                                        }
+                                                                    }}
+                                                                    className="text-red-600 hover:text-red-900"
+                                                                >
+                                                                    <Icon type="trash" className="w-4 h-4" />
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -385,6 +420,7 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-200">
@@ -394,7 +430,7 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
                                             {/* Example: const [payments, setPayments] = useState<PaymentRecord[]>([]); */}
                                             {/* And fetch them in loadData: api.fetchPaymentRecords() */}
                                             {/* For this example, I'll use an empty array for payments to avoid errors */}
-                                            {([] as PaymentRecord[]).map(payment => (
+                                            {payments.map(payment => (
                                                 <tr key={payment.id} className="hover:bg-gray-50">
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                         {payment.paymentDate}
@@ -413,6 +449,22 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 italic">
                                                         {payment.remarks}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                        {(user.role === 'admin' || user.role === 'manager') && (
+                                                            <button
+                                                                onClick={async () => {
+                                                                    if (!window.confirm("Delete this payment record?")) return;
+                                                                    try {
+                                                                        await api.deletePayment(payment.id);
+                                                                        setPayments(prev => prev.filter(p => p.id !== payment.id));
+                                                                    } catch (e) { console.error(e); alert("Failed to delete payment"); }
+                                                                }}
+                                                                className="text-red-600 hover:text-red-900"
+                                                            >
+                                                                <Icon type="trash" className="w-4 h-4" />
+                                                            </button>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))}

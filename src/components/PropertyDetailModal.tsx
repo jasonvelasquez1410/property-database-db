@@ -9,6 +9,7 @@ interface PropertyDetailModalProps {
     user: User;
     onClose: () => void;
     onEdit: (property: Property) => void;
+    onDelete: (id: string) => void;
 }
 
 const DetailSection = ({ title, children }: { title: string, children?: React.ReactNode }) => (
@@ -37,7 +38,7 @@ const formatDate = (dateString?: string) => {
     return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-export const PropertyDetailModal = ({ property, user, onClose, onEdit }: PropertyDetailModalProps) => {
+export const PropertyDetailModal = ({ property, user, onClose, onEdit, onDelete }: PropertyDetailModalProps) => {
     const [activeTab, setActiveTab] = useState('overview');
 
     if (!property) return null;
@@ -74,11 +75,17 @@ export const PropertyDetailModal = ({ property, user, onClose, onEdit }: Propert
                         <p className="text-sm text-gray-300">{property.propertyType} in {property.location}</p>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                        {user.role === 'admin' && (
-                            <button onClick={handleEditClick} className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold bg-yellow-500 text-black rounded-md hover:bg-yellow-400 transition-colors">
-                                <Icon type="edit" className="w-4 h-4" />
-                                <span>Edit</span>
-                            </button>
+                        {(user.role === 'admin' || user.role === 'manager') && (
+                            <>
+                                <button onClick={handleEditClick} className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold bg-yellow-500 text-black rounded-md hover:bg-yellow-400 transition-colors">
+                                    <Icon type="edit" className="w-4 h-4" />
+                                    <span>Edit</span>
+                                </button>
+                                <button onClick={() => onDelete(property.id)} className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold bg-red-600 text-white rounded-md hover:bg-red-500 transition-colors">
+                                    <Icon type="trash" className="w-4 h-4" />
+                                    <span>Delete</span>
+                                </button>
+                            </>
                         )}
                         <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-700 hover:text-white transition-colors">
                             <Icon type="close" className="w-6 h-6" />

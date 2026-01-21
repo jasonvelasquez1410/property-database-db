@@ -17,6 +17,7 @@ interface FinancePageProps {
 
 export const FinancePage = ({ user }: FinancePageProps) => {
     const [properties, setProperties] = useState<Property[]>([]);
+    const [payments, setPayments] = useState<any[]>([]); // Using any for now to match API return, strictly should be PaymentRecord
     const [loading, setLoading] = useState(true);
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -27,10 +28,14 @@ export const FinancePage = ({ user }: FinancePageProps) => {
         const loadData = async () => {
             setLoading(true);
             try {
-                const props = await api.fetchProperties();
+                const [props, payRecords] = await Promise.all([
+                    api.fetchProperties(),
+                    api.fetchPayments()
+                ]);
                 setProperties(props);
+                setPayments(payRecords);
             } catch (error) {
-                console.error("Failed to fetch properties:", error);
+                console.error("Failed to fetch financial data:", error);
             } finally {
                 setLoading(false);
             }
@@ -89,36 +94,77 @@ export const FinancePage = ({ user }: FinancePageProps) => {
     };
 
     const financialSummary = useMemo(() => {
-        const dataToUse = filteredProperties; // Use filtered data
+        const dataToUse = filteredProperties;
+
+        // 1. Asset Value (Wealth)
         const totalAcquisitionCost = dataToUse.reduce((sum, p) => sum + p.acquisition.totalCost, 0);
         const totalMarketValue = dataToUse.reduce((sum, p) => {
             const latestAppraisal = p.appraisals.sort((a, b) => new Date(b.appraisalDate).getTime() - new Date(a.appraisalDate).getTime())[0];
             return sum + (latestAppraisal?.appraisedValue || p.acquisition.totalCost);
         }, 0);
 
-        const thirtyDaysFromNow = new Date();
-        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+        // 2. Cash Flow (Income vs Expense) - Annualized Estimate based on current state
+        /* 
+           Real implementation would filter 'payments' by date range (e.g., This Year).
+           For this "Owner View", we will calculate 'Annualized Run Rate' to show potential.
+        */
 
-        const upcomingDueDates = dataToUse.flatMap(p => p.documentation.docs)
-            .filter(doc => doc.dueDate && new Date(doc.dueDate) <= thirtyDaysFromNow && new Date(doc.dueDate) >= new Date())
-            .length;
-
-        const previousMarketValue = dataToUse.reduce((sum, p) => {
-            const appraisals = p.appraisals.sort((a, b) => new Date(b.appraisalDate).getTime() - new Date(a.appraisalDate).getTime());
-            // Use second to last appraisal, or acquisition cost if not available
-            return sum + (appraisals[1]?.appraisedValue || p.acquisition.totalCost);
+        // Income: Sum of lease rates for active leases (Annualized)
+        const annualizedGrossIncome = dataToUse.reduce((sum, p) => {
+            if (p.lease) {
+                return sum + (p.lease.leaseRate * 12);
+            }
+            return sum;
         }, 0);
 
+        // Actual Collected Income (Year to Date) - derived from Payments table
+        // Filter payments related to the filtered properties (needs implicit link via lease, but leases link to property. 
+        // For simplicity in this view, we sum ALL payments if no filters, or filter if we had lease-property mapping handy in payments loop.
+        // Assuming 'payments' are relevant to the global portfolio for now.
+        const totalCollectedIncome = payments
+            .filter(p => p.status === 'Completed' && p.paymentType === 'Rent')
+            .reduce((sum, p) => sum + p.amount, 0);
+
+
+        // Expenses (Annualized)
+        const annualizedExpenses = dataToUse.reduce((sum, p) => {
+            let exp = 0;
+            // 1. Caretaker
+            if (p.management.caretakerRatePerMonth) exp += (p.management.caretakerRatePerMonth * 12);
+            // 2. Condo Dues (Approximate from last paid * 12 ?? Or just assume last paid is monthly?)
+            // Let's assume 'amountPaid' is monthly for calculation if recent, otherwise 0.
+            if (p.management.condoDues?.amountPaid) exp += (p.management.condoDues.amountPaid * 12);
+            // 3. Taxes (Annual) -> Assume 'amountPaid' is annual tax? Usually RPT is annual.
+            if (p.management.realEstateTaxes.amountPaid) exp += p.management.realEstateTaxes.amountPaid;
+
+            return sum + exp;
+        }, 0);
+
+        const netOperatingIncome = annualizedGrossIncome - annualizedExpenses;
+        const roi = totalAcquisitionCost > 0 ? (netOperatingIncome / totalAcquisitionCost) * 100 : 0;
+
+        // 3. Receivables
+        const pendingPayments = payments.filter(p => p.status === 'Pending').reduce((sum, p) => sum + p.amount, 0);
+
+        // 4. Trend (Market Value Change)
+        const previousMarketValue = dataToUse.reduce((sum, p) => {
+            const appraisals = p.appraisals.sort((a, b) => new Date(b.appraisalDate).getTime() - new Date(a.appraisalDate).getTime());
+            return sum + (appraisals[1]?.appraisedValue || p.acquisition.totalCost);
+        }, 0);
         const valueChangePercentage = previousMarketValue > 0 ? ((totalMarketValue - previousMarketValue) / previousMarketValue) * 100 : 0;
 
         return {
             totalAcquisitionCost,
             totalMarketValue,
-            outstandingPayments: dataToUse.length > 0 ? 31360000 * (dataToUse.length / properties.length) : 0, // Pro-rated mock data
-            upcomingDueDates,
+            annualizedGrossIncome,
+            annualizedExpenses,
+            netOperatingIncome,
+            roi,
+            totalCollectedIncome,
+            pendingPayments,
             valueChangePercentage
         };
-    }, [filteredProperties, properties.length]);
+    }, [filteredProperties, payments]);
 
     const chartData = useMemo(() => {
         const dataToUse = filteredProperties; // Use filtered data
@@ -149,6 +195,13 @@ export const FinancePage = ({ user }: FinancePageProps) => {
             }
         }
 
+        // Expense Breakdown Logic
+        const expenses = {
+            Taxes: dataToUse.reduce((sum, p) => sum + (p.management.realEstateTaxes.amountPaid || 0), 0),
+            Dues: dataToUse.reduce((sum, p) => sum + ((p.management.condoDues?.amountPaid || 0) * 12), 0),
+            Maintenance: dataToUse.reduce((sum, p) => sum + ((p.management.caretakerRatePerMonth || 0) * 12), 0),
+        };
+
         return {
             costDistribution: {
                 labels: Object.keys(costDistribution),
@@ -163,6 +216,13 @@ export const FinancePage = ({ user }: FinancePageProps) => {
                 datasets: [{
                     data: Object.values(paymentStatus),
                     backgroundColor: ['#10B981', '#F59E0B', '#3B82F6'],
+                }]
+            },
+            expenseBreakdown: {
+                labels: Object.keys(expenses),
+                datasets: [{
+                    data: Object.values(expenses),
+                    backgroundColor: ['#EF4444', '#F59E0B', '#6B7280'], // Red, Yellow, Gray
                 }]
             },
             marketValueTrend: {
@@ -191,40 +251,40 @@ export const FinancePage = ({ user }: FinancePageProps) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <SummaryCard
-                    title="Total Acquisition Cost"
-                    value={formatCurrency(financialSummary.totalAcquisitionCost)}
-                    description="Total invested capital"
-                    trend={`${financialSummary.valueChangePercentage >= 0 ? '+' : ''}${financialSummary.valueChangePercentage.toFixed(1)}%`}
-                    trendDirection={financialSummary.valueChangePercentage >= 0 ? 'up' : 'down'}
+                    title="Net Operating Income (Annual)"
+                    value={formatCurrency(financialSummary.netOperatingIncome)}
+                    description={`ROI: ${financialSummary.roi.toFixed(1)}%`}
+                    trend={financialSummary.roi > 5 ? "Healthy" : "Low"}
+                    trendDirection={financialSummary.roi > 5 ? 'up' : 'down'}
+                    icon="properties" // Fallback to properties icon
+                    onClick={() => scrollToSection('cost-chart')}
+                />
+                <SummaryCard
+                    title="Gross Income (Annualized)"
+                    value={formatCurrency(financialSummary.annualizedGrossIncome)}
+                    description="Potential Rent"
+                    trend={`Coll: ${formatCurrency(financialSummary.totalCollectedIncome)}`}
+                    trendDirection="up"
                     icon="dollar-circle"
                     onClick={() => scrollToSection('cost-chart')}
                 />
                 <SummaryCard
-                    title="Current Market Value"
-                    value={formatCurrency(financialSummary.totalMarketValue)}
-                    description="Current valuation"
-                    trend={`${financialSummary.valueChangePercentage >= 0 ? '+' : ''}${financialSummary.valueChangePercentage.toFixed(1)}%`}
-                    trendDirection={financialSummary.valueChangePercentage >= 0 ? 'up' : 'down'}
-                    icon="chart-pie"
-                    onClick={() => scrollToSection('value-trend-chart')}
+                    title="Est. Annual Expenses"
+                    value={formatCurrency(financialSummary.annualizedExpenses)}
+                    description="Taxes, Dues, Maintenance"
+                    trend="Fixed Costs"
+                    trendDirection="down"
+                    icon="document-text" // Fallback to document icon
+                    onClick={() => scrollToSection('cost-chart')}
                 />
                 <SummaryCard
-                    title="Outstanding Payments"
-                    value={formatCurrency(financialSummary.outstandingPayments)}
-                    description="Payables"
-                    trend="-15.3%"
-                    trendDirection="down"
+                    title="Pending Collectibles"
+                    value={formatCurrency(financialSummary.pendingPayments)}
+                    description="Unpaid Rent/PDCs"
+                    trend="Action Required"
+                    trendDirection="down" // Down is bad here? actually high pending is bad.
                     icon="exclamation-triangle"
                     onClick={() => scrollToSection('payment-status-chart')}
-                />
-                <SummaryCard
-                    title="Upcoming Due Dates"
-                    value={financialSummary.upcomingDueDates.toString()}
-                    description="Due in next 30 days"
-                    trend=""
-                    trendDirection="none"
-                    icon="calendar-days"
-                    onClick={() => alert("Showing upcoming due dates filtering...")}
                 />
             </div>
 
@@ -292,10 +352,16 @@ export const FinancePage = ({ user }: FinancePageProps) => {
                         <Bar options={{ responsive: true, maintainAspectRatio: false }} data={chartData.costDistribution} />
                     </div>
                 </div>
-                <div id="payment-status-chart" className="lg:col-span-2 bg-white rounded-xl shadow p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Payment Status Distribution</h3>
-                    <div className="h-80">
-                        <Pie options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }} data={chartData.paymentStatus} />
+                <div id="payment-status-chart" className="lg:col-span-1 bg-white rounded-xl shadow p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Collection Status</h3>
+                    <div className="h-64">
+                        <Pie options={{ responsive: true, maintainAspectRatio: false }} data={chartData.paymentStatus} />
+                    </div>
+                </div>
+                <div className="lg:col-span-1 bg-white rounded-xl shadow p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Expense Breakdown</h3>
+                    <div className="h-64">
+                        <Pie options={{ responsive: true, maintainAspectRatio: false }} data={chartData.expenseBreakdown} />
                     </div>
                 </div>
             </div>

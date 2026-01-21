@@ -350,78 +350,77 @@ export const FinancePage = ({ user: _user }: FinancePageProps) => {
             {activeTab === 'dashboard' ? (
                 // EXISTING DASHBOARD CONTENT
                 <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Icon type="properties" className="h-4 w-4 text-gray-400" />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Icon type="properties" className="h-4 w-4 text-gray-400" />
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Search properties..."
+                                className="pl-10 w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
                         </div>
-                        <input
-                            type="text"
-                            placeholder="Search properties..."
-                            className="pl-10 w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+
+                        <select
+                            className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            value={regionFilter}
+                            onChange={(e) => setRegionFilter(e.target.value)}
+                        >
+                            <option value="">All Regions</option>
+                            <option value="Luzon">Luzon</option>
+                            <option value="Visayas">Visayas</option>
+                            <option value="Mindanao">Mindanao</option>
+                        </select>
+
+                        <select
+                            className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            value={propertyTypeFilter}
+                            onChange={(e) => setPropertyTypeFilter(e.target.value)}
+                        >
+                            <option value="">All Property Types</option>
+                            <option value="Condominium">Condominium</option>
+                            <option value="Commercial">Commercial</option>
+                            <option value="Land">Land</option>
+                            <option value="House">House</option>
+                        </select>
                     </div>
 
-                    <select
-                        className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        value={regionFilter}
-                        onChange={(e) => setRegionFilter(e.target.value)}
-                    >
-                        <option value="">All Regions</option>
-                        <option value="Luzon">Luzon</option>
-                        <option value="Visayas">Visayas</option>
-                        <option value="Mindanao">Mindanao</option>
-                    </select>
-
-                    <select
-                        className="w-full border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                        value={propertyTypeFilter}
-                        onChange={(e) => setPropertyTypeFilter(e.target.value)}
-                    >
-                        <option value="">All Property Types</option>
-                        <option value="Condominium">Condominium</option>
-                        <option value="Commercial">Commercial</option>
-                        <option value="Land">Land</option>
-                        <option value="House">House</option>
-                    </select>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                <div id="cost-chart" className="lg:col-span-3 bg-white rounded-xl shadow p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Cost Distribution by Property Type</h3>
-                    <div className="h-80">
-                        <Bar options={{ responsive: true, maintainAspectRatio: false }} data={chartData.costDistribution} />
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                        <div id="cost-chart" className="lg:col-span-3 bg-white rounded-xl shadow p-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">Cost Distribution by Property Type</h3>
+                            <div className="h-80">
+                                <Bar options={{ responsive: true, maintainAspectRatio: false }} data={chartData.costDistribution} />
+                            </div>
+                        </div>
+                        <div id="payment-status-chart" className="lg:col-span-1 bg-white rounded-xl shadow p-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">Collection Status</h3>
+                            <div className="h-64">
+                                <Pie options={{ responsive: true, maintainAspectRatio: false }} data={chartData.paymentStatus} />
+                            </div>
+                        </div>
+                        <div className="lg:col-span-1 bg-white rounded-xl shadow p-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">Expense Breakdown</h3>
+                            <div className="h-64">
+                                <Pie options={{ responsive: true, maintainAspectRatio: false }} data={chartData.expenseBreakdown} />
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div id="payment-status-chart" className="lg:col-span-1 bg-white rounded-xl shadow p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Collection Status</h3>
-                    <div className="h-64">
-                        <Pie options={{ responsive: true, maintainAspectRatio: false }} data={chartData.paymentStatus} />
-                    </div>
-                </div>
-                <div className="lg:col-span-1 bg-white rounded-xl shadow p-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">Expense Breakdown</h3>
-                    <div className="h-64">
-                        <Pie options={{ responsive: true, maintainAspectRatio: false }} data={chartData.expenseBreakdown} />
-                    </div>
-                </div>
-            </div>
 
-            <div id="value-trend-chart" className="bg-white rounded-xl shadow p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Market Value Trends</h3>
-                <div className="h-80">
-                    <Line options={{ responsive: true, maintainAspectRatio: false }} data={chartData.marketValueTrend} />
+                    <div id="value-trend-chart" className="bg-white rounded-xl shadow p-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Market Value Trends</h3>
+                        <div className="h-80">
+                            <Line options={{ responsive: true, maintainAspectRatio: false }} data={chartData.marketValueTrend} />
+                        </div>
+                    </div>
+                    {/* End of Dashboard Content Wrapper */}
                 </div>
-            </div>
-            {/* End of Dashboard Content Wrapper */}
-        </div>
-    ) : (
-        <AppraisalHistory properties={properties} />
-    )
-}
+            ) : (
+                <AppraisalHistory properties={properties} />
+            )
+            }
         </div >
     );
 };

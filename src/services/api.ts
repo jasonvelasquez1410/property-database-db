@@ -161,10 +161,10 @@ export const api = {
       });
 
       if (error) {
-        return { user: null, error };
-      }
-
-      if (data.user) {
+        // console.warn("Supabase login failed, checking mock...", error.message);
+        // Don't return error yet; allow fallback to check MOCK_USERS
+      } else if (data.user) {
+        // Fetch user profile if exists
         // Fetch user profile if exists
         const { data: profile } = await supabase
           .from('profiles')

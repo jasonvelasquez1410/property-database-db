@@ -474,7 +474,7 @@ export const api = {
       window.location.reload();
     } catch (error: any) {
       console.error("Reset Failed:", error);
-      alert("Failed to reset data. Check console.");
+      alert(`Failed to reset data. Error: ${error.message || JSON.stringify(error)}`);
     }
   },
 

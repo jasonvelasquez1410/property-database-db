@@ -314,12 +314,29 @@ export const PropertyFormModal = ({ onClose, onSubmit, property, loading }: Prop
                                         setPropertyData(prev => ({ ...prev, appraisals: newAppraisals }));
                                     }} className="w-full border-gray-300 rounded-md shadow-sm" />
                                 </FormField>
+
                                 <FormField label="Appraisal Company" id={`appraisal-company-${index}`}>
                                     <input type="text" value={appraisal.appraisalCompany} onChange={(e) => {
                                         const newAppraisals = [...propertyData.appraisals];
                                         newAppraisals[index] = { ...newAppraisals[index], appraisalCompany: e.target.value };
                                         setPropertyData(prev => ({ ...prev, appraisals: newAppraisals }));
                                     }} className="w-full border-gray-300 rounded-md shadow-sm" />
+                                </FormField>
+                                <FormField label="Valuation Report" id={`appraisal-report-${index}`}>
+                                    <FileUploadControl
+                                        id={`appraisal-upload-${index}`}
+                                        fileName={appraisal.reportFileName}
+                                        fileUrl={appraisal.reportUrl}
+                                        onFileChange={(file) => {
+                                            const newAppraisals = [...propertyData.appraisals];
+                                            newAppraisals[index] = {
+                                                ...newAppraisals[index],
+                                                reportUrl: file ? URL.createObjectURL(file) : '#',
+                                                reportFileName: file ? file.name : ''
+                                            };
+                                            setPropertyData(prev => ({ ...prev, appraisals: newAppraisals }));
+                                        }}
+                                    />
                                 </FormField>
                             </div>
                         ))}

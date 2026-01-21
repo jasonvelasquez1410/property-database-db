@@ -507,11 +507,29 @@ export const api = {
   fetchLeases: async (): Promise<Lease[]> => {
     const { data, error } = await supabase
       .from('leases')
-      .select('*')
+      .select(`
+        *,
+        properties (property_name),
+        tenants (name)
+      `)
       .order('created_at', { ascending: false });
 
     if (error) return [];
-    return data as Lease[];
+
+    return data.map((l: any) => ({
+      id: l.id,
+      propertyId: l.property_id,
+      tenantId: l.tenant_id,
+      startDate: l.start_date,
+      endDate: l.end_date,
+      monthlyRent: l.monthly_rent,
+      securityDeposit: l.security_deposit,
+      status: l.status,
+      terms: l.terms,
+      contractUrl: l.contract_url,
+      propertyName: l.properties?.property_name,
+      tenantName: l.tenants?.name
+    }));
   },
 
   addLease: async (lease: Omit<Lease, 'id'>): Promise<Lease> => {

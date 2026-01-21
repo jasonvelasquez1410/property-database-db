@@ -290,7 +290,54 @@ export const PropertyFormModal = ({ onClose, onSubmit, property, loading }: Prop
                             </FormField>
                         )}
                     </div>
-                </div>
+                    <h3 className="text-lg font-semibold text-gray-700 border-b pb-2 pt-4">Appraisal History</h3>
+                    <div className="space-y-4">
+                        {propertyData.appraisals.map((appraisal, index) => (
+                            <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-lg bg-gray-50 relative">
+                                <button type="button" onClick={() => {
+                                    const newAppraisals = [...propertyData.appraisals];
+                                    newAppraisals.splice(index, 1);
+                                    setPropertyData(prev => ({ ...prev, appraisals: newAppraisals }));
+                                }} className="absolute top-2 right-2 text-red-500 hover:text-red-700"><Icon type="trash" className="w-4 h-4" /></button>
+
+                                <FormField label="Date" id={`appraisal-date-${index}`}>
+                                    <input type="date" value={appraisal.appraisalDate.split('T')[0]} onChange={(e) => {
+                                        const newAppraisals = [...propertyData.appraisals];
+                                        newAppraisals[index] = { ...newAppraisals[index], appraisalDate: e.target.value };
+                                        setPropertyData(prev => ({ ...prev, appraisals: newAppraisals }));
+                                    }} className="w-full border-gray-300 rounded-md shadow-sm" />
+                                </FormField>
+                                <FormField label="Value" id={`appraisal-value-${index}`}>
+                                    <input type="number" value={appraisal.appraisedValue} onChange={(e) => {
+                                        const newAppraisals = [...propertyData.appraisals];
+                                        newAppraisals[index] = { ...newAppraisals[index], appraisedValue: parseFloat(e.target.value) || 0 };
+                                        setPropertyData(prev => ({ ...prev, appraisals: newAppraisals }));
+                                    }} className="w-full border-gray-300 rounded-md shadow-sm" />
+                                </FormField>
+                                <FormField label="Appraisal Company" id={`appraisal-company-${index}`}>
+                                    <input type="text" value={appraisal.appraisalCompany} onChange={(e) => {
+                                        const newAppraisals = [...propertyData.appraisals];
+                                        newAppraisals[index] = { ...newAppraisals[index], appraisalCompany: e.target.value };
+                                        setPropertyData(prev => ({ ...prev, appraisals: newAppraisals }));
+                                    }} className="w-full border-gray-300 rounded-md shadow-sm" />
+                                </FormField>
+                            </div>
+                        ))}
+                        <button type="button" onClick={() => {
+                            setPropertyData(prev => ({
+                                ...prev,
+                                appraisals: [...prev.appraisals, {
+                                    appraisalDate: new Date().toISOString().split('T')[0],
+                                    appraisedValue: 0,
+                                    appraisalCompany: '',
+                                    reportUrl: '#'
+                                }]
+                            }));
+                        }} className="flex items-center gap-2 text-sm text-purple-600 font-semibold hover:text-purple-800">
+                            <Icon type="plus" className="w-5 h-5" /> Add Appraisal Record
+                        </button>
+                    </div>
+                </div >
             );
             case 'legal': return (
                 <div className="space-y-4">

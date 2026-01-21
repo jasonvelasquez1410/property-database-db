@@ -16,12 +16,15 @@ interface FinancePageProps {
 }
 
 import { FinanceGuide } from './finance/FinanceGuide';
+import { AppraisalHistory } from './finance/AppraisalHistory';
+import { AppraisalGuide } from './finance/AppraisalGuide';
 
 export const FinancePage = ({ user: _user }: FinancePageProps) => {
     const [properties, setProperties] = useState<Property[]>([]);
     const [payments, setPayments] = useState<PaymentRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [showGuide, setShowGuide] = useState(true);
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'appraisal'>('dashboard');
 
     const [searchTerm, setSearchTerm] = useState('');
     const [regionFilter, setRegionFilter] = useState('');
@@ -320,8 +323,33 @@ export const FinancePage = ({ user: _user }: FinancePageProps) => {
                     </div>
                 </div>
 
-                {showGuide && <FinanceGuide onClose={() => setShowGuide(false)} />}
+            </div>
 
+            {showGuide && (
+                activeTab === 'dashboard'
+                    ? <FinanceGuide onClose={() => setShowGuide(false)} />
+                    : <AppraisalGuide onClose={() => setShowGuide(false)} />
+            )}
+
+            {/* Tab Navigation */}
+            <div className="flex space-x-4 border-b border-gray-200 mb-6">
+                <button
+                    onClick={() => setActiveTab('dashboard')}
+                    className={`pb-2 px-1 text-sm font-medium transition-colors border-b-2 ${activeTab === 'dashboard' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                >
+                    Overview & Cash Flow
+                </button>
+                <button
+                    onClick={() => setActiveTab('appraisal')}
+                    className={`pb-2 px-1 text-sm font-medium transition-colors border-b-2 ${activeTab === 'appraisal' ? 'border-purple-600 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                >
+                    Appraisal & Equity
+                </button>
+            </div>
+
+            {activeTab === 'dashboard' ? (
+                // EXISTING DASHBOARD CONTENT
+                <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -388,6 +416,12 @@ export const FinancePage = ({ user: _user }: FinancePageProps) => {
                     <Line options={{ responsive: true, maintainAspectRatio: false }} data={chartData.marketValueTrend} />
                 </div>
             </div>
+            {/* End of Dashboard Content Wrapper */}
         </div>
+    ) : (
+        <AppraisalHistory properties={properties} />
+    )
+}
+        </div >
     );
 };

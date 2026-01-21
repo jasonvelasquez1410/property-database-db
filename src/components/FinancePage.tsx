@@ -15,10 +15,13 @@ interface FinancePageProps {
     user: User;
 }
 
+import { FinanceGuide } from './finance/FinanceGuide';
+
 export const FinancePage = ({ user: _user }: FinancePageProps) => {
     const [properties, setProperties] = useState<Property[]>([]);
     const [payments, setPayments] = useState<PaymentRecord[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showGuide, setShowGuide] = useState(true);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [regionFilter, setRegionFilter] = useState('');
@@ -298,14 +301,27 @@ export const FinancePage = ({ user: _user }: FinancePageProps) => {
                         >
                             Clear Filters
                         </button>
-                        <button
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium border bg-white rounded-md hover:bg-gray-50"
-                            onClick={handleExportReport}
-                        >
-                            <Icon type="export" className="w-5 h-5" /> Export Report
-                        </button>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowGuide(!showGuide)}
+                                className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${showGuide ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                            >
+                                <Icon type="help" className="w-5 h-5" />
+                                {showGuide ? 'Hide Guide' : 'Show Guide'}
+                            </button>
+                            <button
+                                onClick={handleExportReport}
+                                className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                            >
+                                <Icon type="document" className="w-5 h-5" />
+                                Export Report
+                            </button>
+                        </div>
                     </div>
                 </div>
+
+                {showGuide && <FinanceGuide onClose={() => setShowGuide(false)} />}
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

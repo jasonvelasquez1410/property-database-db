@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Tenant, Lease, PaymentRecord, Property } from '../types';
 import { api } from '../services/api';
 import { Icon } from './shared/Icon';
+import { TenantsGuide } from './tenants/TenantsGuide';
 
 interface TenantsPageProps {
     user: User;
@@ -13,6 +14,8 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
     const [properties, setProperties] = useState<Property[]>([]);
     const [payments, setPayments] = useState<PaymentRecord[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showGuide, setShowGuide] = useState(true);
+
     const [isAddTenantOpen, setIsAddTenantOpen] = useState(false);
     const [isAddLeaseOpen, setIsAddLeaseOpen] = useState(false);
     const [isAddPaymentOpen, setIsAddPaymentOpen] = useState(false);
@@ -148,16 +151,27 @@ export const TenantsPage = ({ user }: TenantsPageProps) => {
                     <h1 className="text-3xl font-bold text-gray-900">Tenant & Lease Management</h1>
                     <p className="mt-1 text-md text-gray-600">Manage tenants, track leases, and monitor rental payments.</p>
                 </div>
-                <button
-                    onClick={() => setIsAddTenantOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-                >
-                    <Icon type="plus" className="w-5 h-5" />
-                    Add Tenant
-                </button>
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => setShowGuide(!showGuide)}
+                        className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium border rounded-md transition-colors ${showGuide ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        <Icon type="help" className="w-4 h-4" />
+                        {showGuide ? 'Hide Guide' : 'Show Guide'}
+                    </button>
+                    {(user.role === 'admin' || user.role === 'manager') && (
+                        <button
+                            onClick={() => setIsAddTenantOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                        >
+                            <Icon type="plus" className="w-5 h-5" />
+                            Add Tenant
+                        </button>
+                    )}
+                </div>
             </div>
 
-            {/* Workflow Guide */}
+            {showGuide && <TenantsGuide onClose={() => setShowGuide(false)} />}
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 sm:p-6">
                 <h3 className="text-sm font-bold text-blue-900 uppercase tracking-wide mb-4 flex items-center gap-2">
                     <Icon type="help" className="w-5 h-5" />

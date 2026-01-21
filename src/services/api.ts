@@ -457,6 +457,18 @@ export const api = {
           ];
           await supabase.from('payments').insert(payments);
         }
+
+        // 6. Create Demo Appraisals
+        const appraisals = [
+          // Appraisals for Makati Condo (Prop[0]) - Acquired for 15M
+          { property_id: insertedProps[0].id, appraisal_date: '2023-01-15', appraised_value: 15500000, appraisal_company: 'Cuervo Appraisers', report_url: '#' },
+          { property_id: insertedProps[0].id, appraisal_date: '2024-01-20', appraised_value: 16200000, appraisal_company: 'Santos Knight Frank', report_url: '#', report_file_name: 'valuation_2024.pdf' },
+
+          // Appraisals for BGC Office (Prop[1]) - Acquired for 28M
+          { property_id: insertedProps[1].id, appraisal_date: '2023-06-10', appraised_value: 29500000, appraisal_company: 'Colliers International', report_url: '#' },
+          { property_id: insertedProps[1].id, appraisal_date: '2024-06-10', appraised_value: 31000000, appraisal_company: 'JLL Philippines', report_url: '#', report_file_name: 'bgc_val_report.pdf' }
+        ];
+        await supabase.from('appraisals').insert(appraisals);
       }
 
       window.location.reload();

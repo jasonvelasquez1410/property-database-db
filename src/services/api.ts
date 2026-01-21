@@ -1,5 +1,5 @@
 
-import { User, Property, PropertyType, Location, PaymentStatus, RecentActivity, Documentation, Tenant, Lease, PaymentRecord } from '../types';
+import { User, Property, PropertyType, Location, PaymentStatus, RecentActivity, Documentation, Tenant, Lease, PaymentRecord, PropertyImage } from '../types';
 import { supabase } from './supabaseClient';
 
 // Mock user database
@@ -229,24 +229,43 @@ export const api = {
           reportUrl: a.report_url,
           reportFileName: a.report_file_name
         }));
-      }
+      }));
+  }
+
+      // Fetch Gallery Images
+      const { data: images } = await supabase
+    .from('property_images')
+    .select('*')
+    .eq('property_id', p.id)
+    .order('created_at', { ascending: false });
+
+  if(images) {
+    prop.images = images.map((img: any) => ({
+      id: img.id,
+      propertyId: img.property_id,
+      imageUrl: img.image_url,
+      caption: img.caption,
+      isPrimary: img.is_primary,
+      createdAt: img.created_at
+    }));
+  }
 
       return prop;
-    }));
+}));
 
-    return fullProperties;
+return fullProperties;
   },
 
-  fetchRecentActivity: async (): Promise<RecentActivity[]> => {
-    const { data, error } = await supabase
-      .from('recent_activities')
-      .select('*')
-      .order('timestamp', { ascending: false })
-      .limit(10);
+fetchRecentActivity: async (): Promise<RecentActivity[]> => {
+  const { data, error } = await supabase
+    .from('recent_activities')
+    .select('*')
+    .order('timestamp', { ascending: false })
+    .limit(10);
 
-    if (error) return [];
-    return data as RecentActivity[];
-  },
+  if (error) return [];
+  return data as RecentActivity[];
+},
 
   fetchPendingDocuments: async (): Promise<Documentation[]> => {
     // This is a derived query.
@@ -275,380 +294,380 @@ export const api = {
     })).sort((a: any, _b: any) => (a.priority === 'High' ? -1 : 1));
   },
 
-  addProperty: async (propertyData: Omit<Property, 'id' | 'photoUrl'>): Promise<Property> => {
-    const rowData = mapPropertyToRow(propertyData);
-    // Add random photo (placeholder)
-    const photoUrl = `https://picsum.photos/seed/new${Date.now()}/800/600`;
+    addProperty: async (propertyData: Omit<Property, 'id' | 'photoUrl'>): Promise<Property> => {
+      const rowData = mapPropertyToRow(propertyData);
+      // Add random photo (placeholder)
+      const photoUrl = `https://picsum.photos/seed/new${Date.now()}/800/600`;
 
-    const { data, error } = await supabase
-      .from('properties')
-      .insert([{ ...rowData, photo_url: photoUrl }])
-      .select()
-      .single();
+      const { data, error } = await supabase
+        .from('properties')
+        .insert([{ ...rowData, photo_url: photoUrl }])
+        .select()
+        .single();
 
-    if (error) throw error;
+      if (error) throw error;
 
-    // Log activity
-    await supabase.from('recent_activities').insert([{
-      type: 'New Property',
-      title: 'New Property Added',
-      description: data.property_name
-    }]);
+      // Log activity
+      await supabase.from('recent_activities').insert([{
+        type: 'New Property',
+        title: 'New Property Added',
+        description: data.property_name
+      }]);
 
-    return mapRowToProperty(data);
-  },
+      return mapRowToProperty(data);
+    },
 
-  updateProperty: async (propertyData: Property): Promise<Property> => {
-    const rowData = mapPropertyToRow(propertyData);
-    const { data, error } = await supabase
-      .from('properties')
-      .update(rowData)
-      .eq('id', propertyData.id)
-      .select()
-      .single();
+      updateProperty: async (propertyData: Property): Promise<Property> => {
+        const rowData = mapPropertyToRow(propertyData);
+        const { data, error } = await supabase
+          .from('properties')
+          .update(rowData)
+          .eq('id', propertyData.id)
+          .select()
+          .single();
 
-    if (error) throw error;
-    return mapRowToProperty(data);
-  },
+        if (error) throw error;
+        return mapRowToProperty(data);
+      },
 
-  deleteProperty: async (propertyId: string): Promise<void> => {
-    const { error } = await supabase
-      .from('properties')
-      .delete()
-      .eq('id', propertyId);
+        deleteProperty: async (propertyId: string): Promise<void> => {
+          const { error } = await supabase
+            .from('properties')
+            .delete()
+            .eq('id', propertyId);
 
-    if (error) throw error;
-  },
-
-  addDocumentToProperty: async (propertyId: string, doc: Omit<Documentation, 'propertyId' | 'propertyName'>): Promise<Property> => {
-    const { data: _data, error } = await supabase
-      .from('documents')
-      .insert([{
-        property_id: propertyId,
-        type: doc.type,
-        status: doc.status,
-        priority: doc.priority,
-        due_date: doc.dueDate,
-        execution_date: doc.executionDate,
-        document_url: doc.documentUrl,
-        file_name: doc.fileName
-      }])
-      .select();
-
-    if (error) throw error;
-
-    // Log activity
-    await supabase.from('recent_activities').insert([{
-      type: 'Document Upload',
-      title: 'Document Uploaded',
-      description: `${doc.type} for property`
-    }]);
-
-    // Return updated property (re-fetch)
-    const { data: propData } = await supabase.from('properties').select('*').eq('id', propertyId).single();
-    return mapRowToProperty(propData);
-  },
-
-  // Seed Data Function (Replaces Reset)
-  resetToDemoData: async () => {
-    // WARNING: This deletes everything in the DB!
-    // For production, this should be disabled or protected.
-    // But for this "transition" phase, it's useful to populate the DB.
-
-    try {
-      // 1. Clear Tables (Order matters due to foreign keys)
-      await supabase.from('payments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('leases').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('tenants').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('documents').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('appraisals').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('properties').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-
-      // 2. Insert Demo Properties
-      const demoProps = [
-        {
-          property_name: 'Makati Prime Condominium Unit',
-          property_type: 'Condominium',
-          full_address: '123 Ayala Ave, Makati, Metro Manila',
-          location: 'Luzon',
-          gps_coordinates: '14.5547, 121.0244',
-          unit_number: '18A', floor_number: '18th Floor', lot_no: 'Unit 18A, Tower 1', tct_or_cct_no: 'CCT-12345',
-          area_sqm: 85, original_developer: 'Ayala Land Premier', brokers_name: 'Jane Doe Realty', brokers_contact: '0917-123-4567', buyers_name: 'John Smith',
-          photo_url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80',
-          acquisition_unit_lot_cost: 15000000, acquisition_total_cost: 15000000,
-          payment_status: 'Fully Paid',
-          possession_is_turned_over: true, possession_turnover_date: '2022-02-01', possession_authorized_recipient: 'John Smith',
-          insurance_amount_insured: 10000000, insurance_company: 'AXA Philippines', insurance_coverage_date: '2024-01-01',
-          real_estate_tax_last_paid: '2024-01-10', real_estate_tax_amount: 45000,
-          condo_dues_last_paid: '2024-07-05', condo_dues_amount: 8500
+          if (error) throw error;
         },
-        {
-          property_name: 'BGC Corporate Office Suite',
-          property_type: 'Commercial',
-          full_address: '25th Street, Bonifacio Global City, Taguig',
-          location: 'Luzon',
-          gps_coordinates: '14.5492, 121.0505',
-          unit_number: '2405', floor_number: '24th Floor', lot_no: 'Unit 2405, Ecoplaza', tct_or_cct_no: 'CCT-98765',
-          area_sqm: 120, original_developer: 'Megaworld', brokers_name: 'BGC Realtors', brokers_contact: '0918-555-0000', buyers_name: 'Tech Solutions Inc.',
-          photo_url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-          acquisition_unit_lot_cost: 25000000, acquisition_total_cost: 28000000, acquisition_fit_out_cost: 3000000,
-          payment_status: 'Fully Paid',
-          possession_is_turned_over: true, possession_turnover_date: '2023-05-15', possession_authorized_recipient: 'CEO Tech Solutions',
-          insurance_amount_insured: 30000000, insurance_company: 'Malayan Insurance',
-          real_estate_tax_last_paid: '2024-01-15', real_estate_tax_amount: 65000,
-          condo_dues_last_paid: '2024-07-01', condo_dues_amount: 12000
-        }
-      ];
 
-      const { data: insertedProps, error: propError } = await supabase.from('properties').insert(demoProps).select();
-      if (propError) throw propError;
+          addDocumentToProperty: async (propertyId: string, doc: Omit<Documentation, 'propertyId' | 'propertyName'>): Promise<Property> => {
+            const { data: _data, error } = await supabase
+              .from('documents')
+              .insert([{
+                property_id: propertyId,
+                type: doc.type,
+                status: doc.status,
+                priority: doc.priority,
+                due_date: doc.dueDate,
+                execution_date: doc.executionDate,
+                document_url: doc.documentUrl,
+                file_name: doc.fileName
+              }])
+              .select();
 
-      // 3. Insert Demo Tenants
-      const demoTenants = [
-        { name: 'StartUp Hub Inc.', email: 'contact@startuphub.com', phone: '0917-000-1111', status: 'Active', occupation: 'Tech Company' },
-        { name: 'Dr. Emily Rose', email: 'emily.rose@hospital.com', phone: '0918-222-3333', status: 'Active', occupation: 'Physician' }
-      ];
+            if (error) throw error;
 
-      const { data: insertedTenants, error: tenantError } = await supabase.from('tenants').insert(demoTenants).select();
-      if (tenantError) throw tenantError;
+            // Log activity
+            await supabase.from('recent_activities').insert([{
+              type: 'Document Upload',
+              title: 'Document Uploaded',
+              description: `${doc.type} for property`
+            }]);
 
-      // 4. Create Leases (Linking Property 1 to Tenant 2, Property 2 to Tenant 1)
-      if (insertedProps && insertedTenants) {
-        // Lease 1: BGC Office (Prop[1]) leased to StartUp Hub (Tenant[0])
-        const lease1 = {
-          property_id: insertedProps[1].id,
-          tenant_id: insertedTenants[0].id,
-          start_date: '2023-08-01',
-          end_date: '2026-08-01',
-          monthly_rent: 150000,
-          security_deposit: 450000,
-          status: 'Active',
-          terms: '3 Years Fixed',
-          contract_url: '#'
-        };
+            // Return updated property (re-fetch)
+            const { data: propData } = await supabase.from('properties').select('*').eq('id', propertyId).single();
+            return mapRowToProperty(propData);
+          },
 
-        // Lease 2: Makati Condo (Prop[0]) leased to Dr. Emily (Tenant[1])
-        const lease2 = {
-          property_id: insertedProps[0].id,
-          tenant_id: insertedTenants[1].id,
-          start_date: '2024-01-01',
-          end_date: '2025-01-01',
-          monthly_rent: 85000,
-          security_deposit: 170000,
-          status: 'Active',
-          terms: '1 Year Renewable',
-          contract_url: '#'
-        };
+            // Seed Data Function (Replaces Reset)
+            resetToDemoData: async () => {
+              // WARNING: This deletes everything in the DB!
+              // For production, this should be disabled or protected.
+              // But for this "transition" phase, it's useful to populate the DB.
 
-        const { data: insertedLeases, error: leaseError } = await supabase.from('leases').insert([lease1, lease2]).select();
-        if (leaseError) throw leaseError;
+              try {
+                // 1. Clear Tables (Order matters due to foreign keys)
+                await supabase.from('payments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                await supabase.from('leases').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                await supabase.from('tenants').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                await supabase.from('documents').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                await supabase.from('appraisals').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                await supabase.from('properties').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
-        // 5. Create Payment History (Mock some payments)
-        if (insertedLeases) {
-          const payments = [
-            // Payments for Lease 1 (BGC)
-            { lease_id: insertedLeases[0].id, payment_date: '2024-01-01', amount: 150000, payment_type: 'Rent', status: 'Completed', payment_method: 'Check' },
-            { lease_id: insertedLeases[0].id, payment_date: '2024-02-01', amount: 150000, payment_type: 'Rent', status: 'Completed', payment_method: 'Check' },
-            { lease_id: insertedLeases[0].id, payment_date: '2024-03-01', amount: 150000, payment_type: 'Rent', status: 'Pending', payment_method: 'Check', remarks: 'Check for deposit' }, // Pending for dashboard
+                // 2. Insert Demo Properties
+                const demoProps = [
+                  {
+                    property_name: 'Makati Prime Condominium Unit',
+                    property_type: 'Condominium',
+                    full_address: '123 Ayala Ave, Makati, Metro Manila',
+                    location: 'Luzon',
+                    gps_coordinates: '14.5547, 121.0244',
+                    unit_number: '18A', floor_number: '18th Floor', lot_no: 'Unit 18A, Tower 1', tct_or_cct_no: 'CCT-12345',
+                    area_sqm: 85, original_developer: 'Ayala Land Premier', brokers_name: 'Jane Doe Realty', brokers_contact: '0917-123-4567', buyers_name: 'John Smith',
+                    photo_url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80',
+                    acquisition_unit_lot_cost: 15000000, acquisition_total_cost: 15000000,
+                    payment_status: 'Fully Paid',
+                    possession_is_turned_over: true, possession_turnover_date: '2022-02-01', possession_authorized_recipient: 'John Smith',
+                    insurance_amount_insured: 10000000, insurance_company: 'AXA Philippines', insurance_coverage_date: '2024-01-01',
+                    real_estate_tax_last_paid: '2024-01-10', real_estate_tax_amount: 45000,
+                    condo_dues_last_paid: '2024-07-05', condo_dues_amount: 8500
+                  },
+                  {
+                    property_name: 'BGC Corporate Office Suite',
+                    property_type: 'Commercial',
+                    full_address: '25th Street, Bonifacio Global City, Taguig',
+                    location: 'Luzon',
+                    gps_coordinates: '14.5492, 121.0505',
+                    unit_number: '2405', floor_number: '24th Floor', lot_no: 'Unit 2405, Ecoplaza', tct_or_cct_no: 'CCT-98765',
+                    area_sqm: 120, original_developer: 'Megaworld', brokers_name: 'BGC Realtors', brokers_contact: '0918-555-0000', buyers_name: 'Tech Solutions Inc.',
+                    photo_url: 'https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+                    acquisition_unit_lot_cost: 25000000, acquisition_total_cost: 28000000, acquisition_fit_out_cost: 3000000,
+                    payment_status: 'Fully Paid',
+                    possession_is_turned_over: true, possession_turnover_date: '2023-05-15', possession_authorized_recipient: 'CEO Tech Solutions',
+                    insurance_amount_insured: 30000000, insurance_company: 'Malayan Insurance',
+                    real_estate_tax_last_paid: '2024-01-15', real_estate_tax_amount: 65000,
+                    condo_dues_last_paid: '2024-07-01', condo_dues_amount: 12000
+                  }
+                ];
 
-            // Payments for Lease 2 (Makati)
-            { lease_id: insertedLeases[1].id, payment_date: '2024-01-05', amount: 85000, payment_type: 'Rent', status: 'Completed', payment_method: 'Bank Transfer' },
-            { lease_id: insertedLeases[1].id, payment_date: '2024-02-05', amount: 85000, payment_type: 'Rent', status: 'Completed', payment_method: 'Bank Transfer' }
-          ];
-          await supabase.from('payments').insert(payments);
-        }
+                const { data: insertedProps, error: propError } = await supabase.from('properties').insert(demoProps).select();
+                if (propError) throw propError;
 
-        // 6. Create Demo Appraisals
-        const appraisals = [
-          // Appraisals for Makati Condo (Prop[0]) - Acquired for 15M
-          { property_id: insertedProps[0].id, appraisal_date: '2023-01-15', appraised_value: 15500000, appraisal_company: 'Cuervo Appraisers', report_url: '#' },
-          { property_id: insertedProps[0].id, appraisal_date: '2024-01-20', appraised_value: 16200000, appraisal_company: 'Santos Knight Frank', report_url: '#', report_file_name: 'valuation_2024.pdf' },
+                // 3. Insert Demo Tenants
+                const demoTenants = [
+                  { name: 'StartUp Hub Inc.', email: 'contact@startuphub.com', phone: '0917-000-1111', status: 'Active', occupation: 'Tech Company' },
+                  { name: 'Dr. Emily Rose', email: 'emily.rose@hospital.com', phone: '0918-222-3333', status: 'Active', occupation: 'Physician' }
+                ];
 
-          // Appraisals for BGC Office (Prop[1]) - Acquired for 28M
-          { property_id: insertedProps[1].id, appraisal_date: '2023-06-10', appraised_value: 29500000, appraisal_company: 'Colliers International', report_url: '#' },
-          { property_id: insertedProps[1].id, appraisal_date: '2024-06-10', appraised_value: 31000000, appraisal_company: 'JLL Philippines', report_url: '#', report_file_name: 'bgc_val_report.pdf' }
-        ];
-        await supabase.from('appraisals').insert(appraisals);
-      }
+                const { data: insertedTenants, error: tenantError } = await supabase.from('tenants').insert(demoTenants).select();
+                if (tenantError) throw tenantError;
 
-      window.location.reload();
-    } catch (error: any) {
-      console.error("Reset Failed:", error);
-      alert(`Failed to reset data. Error: ${error.message || JSON.stringify(error)}`);
-    }
-  },
+                // 4. Create Leases (Linking Property 1 to Tenant 2, Property 2 to Tenant 1)
+                if (insertedProps && insertedTenants) {
+                  // Lease 1: BGC Office (Prop[1]) leased to StartUp Hub (Tenant[0])
+                  const lease1 = {
+                    property_id: insertedProps[1].id,
+                    tenant_id: insertedTenants[0].id,
+                    start_date: '2023-08-01',
+                    end_date: '2026-08-01',
+                    monthly_rent: 150000,
+                    security_deposit: 450000,
+                    status: 'Active',
+                    terms: '3 Years Fixed',
+                    contract_url: '#'
+                  };
 
-  // --- Tenant & Lease Management ---
+                  // Lease 2: Makati Condo (Prop[0]) leased to Dr. Emily (Tenant[1])
+                  const lease2 = {
+                    property_id: insertedProps[0].id,
+                    tenant_id: insertedTenants[1].id,
+                    start_date: '2024-01-01',
+                    end_date: '2025-01-01',
+                    monthly_rent: 85000,
+                    security_deposit: 170000,
+                    status: 'Active',
+                    terms: '1 Year Renewable',
+                    contract_url: '#'
+                  };
 
-  fetchTenants: async (): Promise<Tenant[]> => {
-    const { data, error } = await supabase
-      .from('tenants')
-      .select('*')
-      .order('created_at', { ascending: false });
+                  const { data: insertedLeases, error: leaseError } = await supabase.from('leases').insert([lease1, lease2]).select();
+                  if (leaseError) throw leaseError;
 
-    if (error) {
-      console.warn("Supabase fetch tenants failed, returning empty/mock", error);
-      return [];
-    }
-    return data as Tenant[];
-  },
+                  // 5. Create Payment History (Mock some payments)
+                  if (insertedLeases) {
+                    const payments = [
+                      // Payments for Lease 1 (BGC)
+                      { lease_id: insertedLeases[0].id, payment_date: '2024-01-01', amount: 150000, payment_type: 'Rent', status: 'Completed', payment_method: 'Check' },
+                      { lease_id: insertedLeases[0].id, payment_date: '2024-02-01', amount: 150000, payment_type: 'Rent', status: 'Completed', payment_method: 'Check' },
+                      { lease_id: insertedLeases[0].id, payment_date: '2024-03-01', amount: 150000, payment_type: 'Rent', status: 'Pending', payment_method: 'Check', remarks: 'Check for deposit' }, // Pending for dashboard
 
-  addTenant: async (tenant: Omit<Tenant, 'id'>): Promise<Tenant> => {
-    const { data, error } = await supabase
-      .from('tenants')
-      .insert([tenant])
-      .select()
-      .single();
+                      // Payments for Lease 2 (Makati)
+                      { lease_id: insertedLeases[1].id, payment_date: '2024-01-05', amount: 85000, payment_type: 'Rent', status: 'Completed', payment_method: 'Bank Transfer' },
+                      { lease_id: insertedLeases[1].id, payment_date: '2024-02-05', amount: 85000, payment_type: 'Rent', status: 'Completed', payment_method: 'Bank Transfer' }
+                    ];
+                    await supabase.from('payments').insert(payments);
+                  }
 
-    if (error) throw error;
-    return data as Tenant;
-  },
+                  // 6. Create Demo Appraisals
+                  const appraisals = [
+                    // Appraisals for Makati Condo (Prop[0]) - Acquired for 15M
+                    { property_id: insertedProps[0].id, appraisal_date: '2023-01-15', appraised_value: 15500000, appraisal_company: 'Cuervo Appraisers', report_url: '#' },
+                    { property_id: insertedProps[0].id, appraisal_date: '2024-01-20', appraised_value: 16200000, appraisal_company: 'Santos Knight Frank', report_url: '#', report_file_name: 'valuation_2024.pdf' },
 
-  fetchLeases: async (): Promise<Lease[]> => {
-    const { data, error } = await supabase
-      .from('leases')
-      .select(`
+                    // Appraisals for BGC Office (Prop[1]) - Acquired for 28M
+                    { property_id: insertedProps[1].id, appraisal_date: '2023-06-10', appraised_value: 29500000, appraisal_company: 'Colliers International', report_url: '#' },
+                    { property_id: insertedProps[1].id, appraisal_date: '2024-06-10', appraised_value: 31000000, appraisal_company: 'JLL Philippines', report_url: '#', report_file_name: 'bgc_val_report.pdf' }
+                  ];
+                  await supabase.from('appraisals').insert(appraisals);
+                }
+
+                window.location.reload();
+              } catch (error: any) {
+                console.error("Reset Failed:", error);
+                alert(`Failed to reset data. Error: ${error.message || JSON.stringify(error)}`);
+              }
+            },
+
+              // --- Tenant & Lease Management ---
+
+              fetchTenants: async (): Promise<Tenant[]> => {
+                const { data, error } = await supabase
+                  .from('tenants')
+                  .select('*')
+                  .order('created_at', { ascending: false });
+
+                if (error) {
+                  console.warn("Supabase fetch tenants failed, returning empty/mock", error);
+                  return [];
+                }
+                return data as Tenant[];
+              },
+
+                addTenant: async (tenant: Omit<Tenant, 'id'>): Promise<Tenant> => {
+                  const { data, error } = await supabase
+                    .from('tenants')
+                    .insert([tenant])
+                    .select()
+                    .single();
+
+                  if (error) throw error;
+                  return data as Tenant;
+                },
+
+                  fetchLeases: async (): Promise<Lease[]> => {
+                    const { data, error } = await supabase
+                      .from('leases')
+                      .select(`
         *,
         properties (property_name),
         tenants (name)
       `)
-      .order('created_at', { ascending: false });
+                      .order('created_at', { ascending: false });
 
-    if (error) return [];
+                    if (error) return [];
 
-    return data.map((l: any) => ({
-      id: l.id,
-      propertyId: l.property_id,
-      tenantId: l.tenant_id,
-      startDate: l.start_date,
-      endDate: l.end_date,
-      monthlyRent: l.monthly_rent,
-      securityDeposit: l.security_deposit,
-      status: l.status,
-      terms: l.terms,
-      contractUrl: l.contract_url,
-      propertyName: l.properties?.property_name,
-      tenantName: l.tenants?.name
-    }));
-  },
+                    return data.map((l: any) => ({
+                      id: l.id,
+                      propertyId: l.property_id,
+                      tenantId: l.tenant_id,
+                      startDate: l.start_date,
+                      endDate: l.end_date,
+                      monthlyRent: l.monthly_rent,
+                      securityDeposit: l.security_deposit,
+                      status: l.status,
+                      terms: l.terms,
+                      contractUrl: l.contract_url,
+                      propertyName: l.properties?.property_name,
+                      tenantName: l.tenants?.name
+                    }));
+                  },
 
-  addLease: async (lease: Omit<Lease, 'id'>): Promise<Lease> => {
-    // Ensure numeric values are numbers
-    // Payload used to be here but was unused.
+                    addLease: async (lease: Omit<Lease, 'id'>): Promise<Lease> => {
+                      // Ensure numeric values are numbers
+                      // Payload used to be here but was unused.
 
-    // We need to map back to snake_case for Supabase if we didn't use the JS client's auto-mapping (which we might not have set up)
-    // Actually, standard supabase client matches JSON keys if table columns match. 
-    // But my table columns are snake_case (`monthly_rent`) and my types are camelCase (`monthlyRent`).
-    // I need to map them manually unless I have a global converter. 
-    // Based on `mapPropertyToRow`, I am doing manual mapping.
+                      // We need to map back to snake_case for Supabase if we didn't use the JS client's auto-mapping (which we might not have set up)
+                      // Actually, standard supabase client matches JSON keys if table columns match. 
+                      // But my table columns are snake_case (`monthly_rent`) and my types are camelCase (`monthlyRent`).
+                      // I need to map them manually unless I have a global converter. 
+                      // Based on `mapPropertyToRow`, I am doing manual mapping.
 
-    const dbLease = {
-      property_id: lease.propertyId,
-      tenant_id: lease.tenantId,
-      start_date: lease.startDate,
-      end_date: lease.endDate,
-      monthly_rent: lease.monthlyRent,
-      security_deposit: lease.securityDeposit,
-      status: lease.status,
-      terms: lease.terms,
-      contract_url: lease.contractUrl
-    };
+                      const dbLease = {
+                        property_id: lease.propertyId,
+                        tenant_id: lease.tenantId,
+                        start_date: lease.startDate,
+                        end_date: lease.endDate,
+                        monthly_rent: lease.monthlyRent,
+                        security_deposit: lease.securityDeposit,
+                        status: lease.status,
+                        terms: lease.terms,
+                        contract_url: lease.contractUrl
+                      };
 
-    const { data, error } = await supabase
-      .from('leases')
-      .insert([dbLease])
-      .select()
-      .single();
+                      const { data, error } = await supabase
+                        .from('leases')
+                        .insert([dbLease])
+                        .select()
+                        .single();
 
-    if (error) throw error;
+                      if (error) throw error;
 
-    // Map back to camelCase for frontend
-    return {
-      id: data.id,
-      propertyId: data.property_id,
-      tenantId: data.tenant_id,
-      startDate: data.start_date,
-      endDate: data.end_date,
-      monthlyRent: data.monthly_rent,
-      securityDeposit: data.security_deposit,
-      status: data.status,
-      terms: data.terms,
-      contractUrl: data.contract_url
-    };
-  },
+                      // Map back to camelCase for frontend
+                      return {
+                        id: data.id,
+                        propertyId: data.property_id,
+                        tenantId: data.tenant_id,
+                        startDate: data.start_date,
+                        endDate: data.end_date,
+                        monthlyRent: data.monthly_rent,
+                        securityDeposit: data.security_deposit,
+                        status: data.status,
+                        terms: data.terms,
+                        contractUrl: data.contract_url
+                      };
+                    },
 
-  fetchPayments: async (): Promise<PaymentRecord[]> => {
-    const { data, error } = await supabase
-      .from('payments')
-      .select('*')
-      .order('payment_date', { ascending: false });
+                      fetchPayments: async (): Promise<PaymentRecord[]> => {
+                        const { data, error } = await supabase
+                          .from('payments')
+                          .select('*')
+                          .order('payment_date', { ascending: false });
 
-    if (error) return [];
+                        if (error) return [];
 
-    return data.map((p: any) => ({
-      id: p.id,
-      leaseId: p.lease_id,
-      paymentDate: p.payment_date,
-      amount: p.amount,
-      paymentType: p.payment_type,
-      paymentMethod: p.payment_method,
-      referenceNo: p.reference_no,
-      status: p.status,
-      remarks: p.remarks
-    }));
-  },
+                        return data.map((p: any) => ({
+                          id: p.id,
+                          leaseId: p.lease_id,
+                          paymentDate: p.payment_date,
+                          amount: p.amount,
+                          paymentType: p.payment_type,
+                          paymentMethod: p.payment_method,
+                          referenceNo: p.reference_no,
+                          status: p.status,
+                          remarks: p.remarks
+                        }));
+                      },
 
-  addPayment: async (payment: Omit<PaymentRecord, 'id'>): Promise<PaymentRecord> => {
-    const dbPayment = {
-      lease_id: payment.leaseId,
-      payment_date: payment.paymentDate,
-      amount: payment.amount,
-      payment_type: payment.paymentType,
-      payment_method: payment.paymentMethod,
-      reference_no: payment.referenceNo,
-      status: payment.status,
-      remarks: payment.remarks
-    };
+                        addPayment: async (payment: Omit<PaymentRecord, 'id'>): Promise<PaymentRecord> => {
+                          const dbPayment = {
+                            lease_id: payment.leaseId,
+                            payment_date: payment.paymentDate,
+                            amount: payment.amount,
+                            payment_type: payment.paymentType,
+                            payment_method: payment.paymentMethod,
+                            reference_no: payment.referenceNo,
+                            status: payment.status,
+                            remarks: payment.remarks
+                          };
 
-    const { data, error } = await supabase
-      .from('payments')
-      .insert([dbPayment])
-      .select()
-      .single();
+                          const { data, error } = await supabase
+                            .from('payments')
+                            .insert([dbPayment])
+                            .select()
+                            .single();
 
-    if (error) throw error;
+                          if (error) throw error;
 
-    return {
-      id: data.id,
-      leaseId: data.lease_id,
-      paymentDate: data.payment_date,
-      amount: data.amount,
-      paymentType: data.payment_type,
-      paymentMethod: data.payment_method,
-      referenceNo: data.reference_no,
-      status: data.status,
-      remarks: data.remarks
-    };
-  },
+                          return {
+                            id: data.id,
+                            leaseId: data.lease_id,
+                            paymentDate: data.payment_date,
+                            amount: data.amount,
+                            paymentType: data.payment_type,
+                            paymentMethod: data.payment_method,
+                            referenceNo: data.reference_no,
+                            status: data.status,
+                            remarks: data.remarks
+                          };
+                        },
 
-  clearAllData: async () => {
-    // Clears user's view for now, or deletes from DB?
-    // Safety: maybe just reload
-    window.location.reload();
-  },
+                          clearAllData: async () => {
+                            // Clears user's view for now, or deletes from DB?
+                            // Safety: maybe just reload
+                            window.location.reload();
+                          },
 
-  deleteTenant: async (id: string): Promise<void> => {
-    const { error } = await supabase.from('tenants').delete().eq('id', id);
-    if (error) throw error;
-  },
+                            deleteTenant: async (id: string): Promise<void> => {
+                              const { error } = await supabase.from('tenants').delete().eq('id', id);
+                              if (error) throw error;
+                            },
 
-  deleteLease: async (id: string): Promise<void> => {
-    const { error } = await supabase.from('leases').delete().eq('id', id);
-    if (error) throw error;
-  },
+                              deleteLease: async (id: string): Promise<void> => {
+                                const { error } = await supabase.from('leases').delete().eq('id', id);
+                                if (error) throw error;
+                              },
 
-  deletePayment: async (id: string): Promise<void> => {
-    const { error } = await supabase.from('payments').delete().eq('id', id);
-    if (error) throw error;
-  }
+                                deletePayment: async (id: string): Promise<void> => {
+                                  const { error } = await supabase.from('payments').delete().eq('id', id);
+                                  if (error) throw error;
+                                }
 };

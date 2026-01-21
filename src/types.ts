@@ -144,6 +144,16 @@ export interface Property {
   insurance?: Insurance;
   management: PropertyManagement;
   appraisals: Appraisal[];
+  images?: PropertyImage[];
+}
+
+export interface PropertyImage {
+  id: string;
+  propertyId: string;
+  imageUrl: string;
+  caption?: string;
+  isPrimary: boolean;
+  createdAt: string;
 }
 
 export interface RecentActivity {

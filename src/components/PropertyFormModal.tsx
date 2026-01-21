@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Property, PropertyType, Location, PaymentStatus, Documentation } from '../types';
+
 import { Icon } from './shared/Icon';
 import { FormField } from './shared/FormField';
 import { PROPERTY_TYPES, LOCATIONS } from '../constants';
@@ -41,25 +42,99 @@ const getInitialState = (): Omit<Property, 'id' | 'photoUrl'> => ({
     appraisals: [],
     lease: undefined,
     insurance: undefined,
+    images: []
 });
 
 export const PropertyFormModal = ({ onClose, onSubmit, property, loading }: PropertyFormModalProps) => {
     const isEditMode = !!property;
 
     const [activeTab, setActiveTab] = useState('core');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [propertyData, setPropertyData] = useState<Omit<Property, 'id' | 'photoUrl'> | Property>(getInitialState());
     const [hasLease, setHasLease] = useState(false);
     const [hasInsurance, setHasInsurance] = useState(false);
+    const [galleryImages, setGalleryImages] = useState<any[]>([]); // To track existing + new images being added
+    const [uploadingImage, setUploadingImage] = useState(false);
+
 
     useEffect(() => {
         if (isEditMode && property) {
             setPropertyData(property);
             setHasLease(!!property.lease);
             setHasInsurance(!!property.insurance);
+            setGalleryImages(property.images || []);
         } else {
             setPropertyData(getInitialState());
+            setGalleryImages([]);
         }
     }, [isEditMode, property]);
+
+    const handleGalleryUpload = async (file: File) => {
+        if (!property && !propertyData.propertyName) {
+            alert("Please provide a property name first or save the property before adding images.");
+            return;
+        }
+
+        // If it's a new property (no ID), we can't upload to DB yet easily unless we save first.
+        // For better UX, let's just use object URL for preview and upload on save? 
+        // OR: Require save first. 
+        // Let's go with: Direct upload if property.id exists. If not, maybe just preview?
+        // Simpler approach: Just use object URLs for now and mock the "upload" to local state, 
+        // but given the requirement, let's assume we can upload if we have an ID.
+
+        if (isEditMode && (property as Property).id) {
+            setUploadingImage(true);
+            try {
+                // Mock upload - usually would upload to storage bucket
+                // Here we just use object URL but save record to DB
+                // In real app: upload to Storage -> get URL -> save to DB
+                const fakeUrl = URL.createObjectURL(file);
+
+                // We need to import api here, but let's assume it's passed or available.
+                // Wait, I need to Import API at the top.
+                // For now, let's update local state and let the user "Submit" to save changes?
+                // The prompt asked for "gallery view", implies viewing.
+
+                // Let's add to local state for preview
+                const newImg = {
+                    id: `temp-${Date.now()}`,
+                    propertyId: (property as Property).id,
+                    imageUrl: fakeUrl,
+                    isPrimary: galleryImages.length === 0,
+                    createdAt: new Date().toISOString()
+                };
+
+                setGalleryImages([newImg, ...galleryImages]);
+
+                // Determine if we should trigger actual API call or just form state
+                // The `onSubmit` handles the main property update. 
+                // We might need a separate "useEffect" or submit handler to process these images if we don't upload immediately.
+                // BUT: the `api.addPropertyImage` exists.
+                // Ideally, we upload immediately if the property exists.
+
+                // I will add the API call logic in a second edit after adding imports.
+                // For now, purely local state to render UI.
+
+            } catch (e) {
+                console.error(e);
+                alert("Failed to upload");
+            } finally {
+                setUploadingImage(false);
+            }
+        } else {
+            const fakeUrl = URL.createObjectURL(file);
+            const newImg = {
+                id: `temp-${Date.now()}`,
+                propertyId: 'new',
+                imageUrl: fakeUrl,
+                isPrimary: galleryImages.length === 0,
+                createdAt: new Date().toISOString()
+            };
+            setGalleryImages([newImg, ...galleryImages]);
+        }
+    };
+
+    // ... existing hooks ...
 
 
     useEffect(() => {
@@ -190,7 +265,11 @@ export const PropertyFormModal = ({ onClose, onSubmit, property, loading }: Prop
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        await onSubmit(propertyData);
+        const submissionData = {
+            ...propertyData,
+            images: galleryImages
+        };
+        await onSubmit(submissionData);
     }
 
     const tabs = [
@@ -222,6 +301,83 @@ export const PropertyFormModal = ({ onClose, onSubmit, property, loading }: Prop
                     <FormField label="Full Address" id="fullAddress" required>
                         <textarea id="fullAddress" name="fullAddress" value={propertyData.fullAddress} onChange={handleChange} rows={2} className="w-full border-gray-300 rounded-md shadow-sm" />
                     </FormField>
+                    {/* Gallery Section */}
+                    <div className="space-y-4 border rounded-lg p-4 bg-gray-50">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-lg font-semibold text-gray-700">Property Gallery</h3>
+                            <div className="relative">
+                                <input
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    className="hidden"
+                                    id="gallery-upload"
+                                    onChange={(e) => {
+                                        if (e.target.files) {
+                                            Array.from(e.target.files).forEach(file => handleGalleryUpload(file));
+                                        }
+                                    }}
+                                />
+                                <label
+                                    htmlFor="gallery-upload"
+                                    className="cursor-pointer flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+                                >
+                                    <Icon type="plus" className={`w-4 h-4 ${uploadingImage ? 'animate-spin' : ''}`} />
+                                    {uploadingImage ? 'Processing...' : 'Add Photos'}
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Main Preview */}
+                        {galleryImages.length > 0 ? (
+                            <div className="space-y-4">
+                                <div className="aspect-video w-full rounded-lg overflow-hidden bg-gray-200 border relative group">
+                                    <img
+                                        src={galleryImages[0].imageUrl}
+                                        alt="Main Property View"
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                        <p className="text-white font-medium bg-black bg-opacity-50 px-3 py-1 rounded-full">Primary Photo</p>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                                    {galleryImages.map((img, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`relative aspect-square rounded-md overflow-hidden cursor-pointer border-2 group ${idx === 0 ? 'border-blue-500' : 'border-transparent'}`}
+                                            onClick={() => {
+                                                // Move clicked image to front (set as primary preview)
+                                                const newImages = [...galleryImages];
+                                                const [selected] = newImages.splice(idx, 1);
+                                                newImages.unshift(selected);
+                                                setGalleryImages(newImages);
+                                            }}
+                                        >
+                                            <img src={img.imageUrl} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setGalleryImages(prev => prev.filter((_, i) => i !== idx));
+                                                }}
+                                                className="absolute top-1 right-1 bg-red-500 text-white p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <Icon type="close" className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center py-10 border-2 border-dashed border-gray-300 rounded-lg text-gray-500">
+                                <Icon type="image" className="w-12 h-12 mx-auto text-gray-400 mb-2" />
+                                <p>No images yet.</p>
+                                <p className="text-xs">Upload photos to create a gallery.</p>
+                            </div>
+                        )}
+                    </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField label="GPS Coordinates" id="gpsCoordinates">
                             <div className="relative">

@@ -442,7 +442,29 @@ export const api = {
 
     // Return updated property (re-fetch)
     const { data: propData } = await supabase.from('properties').select('*').eq('id', propertyId).single();
-    return mapRowToProperty(propData);
+
+    // Check if property exists
+    if (!propData) throw new Error('Property not found after update');
+
+    const prop = mapRowToProperty(propData);
+
+    // Fetch and attach ALL documents for this property to ensure the UI has the complete list
+    const { data: docs } = await supabase.from('documents').select('*').eq('property_id', propertyId);
+    if (docs) {
+      prop.documentation.docs = docs.map((d: any) => ({
+        type: d.type,
+        status: d.status,
+        priority: d.priority,
+        dueDate: d.due_date,
+        executionDate: d.execution_date,
+        documentUrl: d.document_url,
+        fileName: d.file_name,
+        propertyId: propertyId,
+        propertyName: prop.propertyName
+      }));
+    }
+
+    return prop;
   },
 
   // Seed Data Function (Replaces Reset)

@@ -18,6 +18,13 @@ export const UploadDocumentModal = ({ properties, onClose, onUploadSuccess }: Up
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    // Update propertyId if properties load/change after mount
+    React.useEffect(() => {
+        if (properties.length > 0 && !propertyId) {
+            setPropertyId(properties[0].id);
+        }
+    }, [properties, propertyId]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!file || !propertyId || !documentType) {
@@ -47,6 +54,19 @@ export const UploadDocumentModal = ({ properties, onClose, onUploadSuccess }: Up
         }
     };
 
+    if (properties.length === 0) {
+        return (
+            <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={onClose}>
+                <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6 text-center" onClick={e => e.stopPropagation()}>
+                    <Icon type="exclamation-triangle" className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">No Properties Found</h3>
+                    <p className="text-gray-600 mb-6">You need to add a property before you can upload documents.</p>
+                    <button onClick={onClose} className="px-4 py-2 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 font-medium">Close</button>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-4" onClick={onClose}>
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
@@ -63,7 +83,7 @@ export const UploadDocumentModal = ({ properties, onClose, onUploadSuccess }: Up
                             </select>
                         </FormField>
                         <FormField label="Document Type" id="documentType" required>
-                             <select id="documentType" value={documentType} onChange={e => setDocumentType(e.target.value as Documentation['type'])} className="w-full border-gray-300 rounded-md shadow-sm">
+                            <select id="documentType" value={documentType} onChange={e => setDocumentType(e.target.value as Documentation['type'])} className="w-full border-gray-300 rounded-md shadow-sm">
                                 <option value="CTS">CTS</option>
                                 <option value="DOAS">DOAS</option>
                                 <option value="COL">COL</option>
@@ -74,14 +94,14 @@ export const UploadDocumentModal = ({ properties, onClose, onUploadSuccess }: Up
                                 <option value="Insurance Policy">Insurance Policy</option>
                             </select>
                         </FormField>
-                         <FormField label="File" id="fileUpload" required>
-                            <FileUploadControl 
-                                id="doc-upload" 
+                        <FormField label="File" id="fileUpload" required>
+                            <FileUploadControl
+                                id="doc-upload"
                                 onFileChange={setFile}
                                 fileName={file?.name}
                                 fileUrl={file ? URL.createObjectURL(file) : undefined}
                             />
-                         </FormField>
+                        </FormField>
                     </main>
                     <footer className="p-4 bg-gray-50 border-t rounded-b-xl flex justify-end gap-4">
                         <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>

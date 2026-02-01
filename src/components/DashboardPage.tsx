@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { User, Property, RecentActivity, Documentation as DocType, Location } from '../types';
 import { api } from '../services/api';
 import { PropertyFormModal } from './PropertyFormModal';
+import { UploadDocumentModal } from './UploadDocumentModal';
 import { SummaryCard } from './SummaryCard';
 import { Icon } from './shared/Icon';
 import { Header } from './layout/Header';
@@ -28,6 +29,7 @@ export const DashboardPage = ({ user, onLogout, onNavigate }: DashboardPageProps
   const [pendingDocs, setPendingDocs] = useState<DocType[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -66,6 +68,11 @@ export const DashboardPage = ({ user, onLogout, onNavigate }: DashboardPageProps
       setLoading(false);
       setIsFormOpen(false);
     }
+  };
+
+  const handleUploadSuccess = (updatedProperty: Property) => {
+    setProperties(prev => prev.map(p => p.id === updatedProperty.id ? updatedProperty : p));
+    setIsUploadModalOpen(false);
   };
 
 
@@ -172,7 +179,10 @@ export const DashboardPage = ({ user, onLogout, onNavigate }: DashboardPageProps
             <PendingDocumentsWidget documents={pendingDocs} />
           </div>
           <div className="lg:col-span-1">
-            <QuickActionsWidget onAddProperty={() => setIsFormOpen(true)} />
+            <QuickActionsWidget
+              onAddProperty={() => setIsFormOpen(true)}
+              onUploadDocument={() => setIsUploadModalOpen(true)}
+            />
           </div>
         </div>
       </main>
@@ -184,6 +194,14 @@ export const DashboardPage = ({ user, onLogout, onNavigate }: DashboardPageProps
           onSubmit={handleFormSubmit}
           property={null}
           loading={loading}
+        />
+      )}
+
+      {isUploadModalOpen && (
+        <UploadDocumentModal
+          properties={properties}
+          onClose={() => setIsUploadModalOpen(false)}
+          onUploadSuccess={handleUploadSuccess}
         />
       )}
     </div>

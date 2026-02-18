@@ -265,16 +265,13 @@ export const api = {
   },
 
   fetchProperties: async (): Promise<Property[]> => {
-    // Optimization: Use a single joined query to fetch all related data in one go.
-    // This prevents N+1 query performance issues and hanging on slower connections/large datasets.
+    // Strategy: Fetch properties first, then fetch related data in parallel for ALL properties at once.
+    // This avoids N+1 loops AND avoids potential JOIN issues if relationships aren't perfectly defined.
+
+    // 1. Fetch Properties
     const { data: properties, error } = await supabase
       .from('properties')
-      .select(`
-        *,
-        documents (*),
-        appraisals (*),
-        property_images (*)
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -282,48 +279,61 @@ export const api = {
       return [];
     }
 
-    // Map the joined data to our Property interface
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!properties || properties.length === 0) {
+      return [];
+    }
+
+    const propertyIds = properties.map((p: any) => p.id);
+
+    // 2. Fetch Related Data in Parallel
+    const [docsResult, appraisalsResult, imagesResult] = await Promise.all([
+      supabase.from('documents').select('*').in('property_id', propertyIds),
+      supabase.from('appraisals').select('*').in('property_id', propertyIds),
+      supabase.from('property_images').select('*').in('property_id', propertyIds)
+    ]);
+
+    const allDocs = docsResult.data || [];
+    const allAppraisals = appraisalsResult.data || [];
+    const allImages = imagesResult.data || [];
+
+    // 3. Map Data
     return properties.map((p: any) => {
       const prop = mapRowToProperty(p);
 
-      // Map Documents (from joined 'documents' array)
-      if (p.documents && Array.isArray(p.documents)) {
-        prop.documentation.docs = p.documents.map((d: any) => ({
-          type: d.type,
-          status: d.status,
-          priority: d.priority,
-          dueDate: d.due_date,
-          executionDate: d.execution_date,
-          documentUrl: d.document_url,
-          fileName: d.file_name,
-          propertyId: p.id,
-          propertyName: p.property_name
-        }));
-      }
+      // Attach Documents
+      const myDocs = allDocs.filter((d: any) => d.property_id === p.id);
+      prop.documentation.docs = myDocs.map((d: any) => ({
+        type: d.type,
+        status: d.status,
+        priority: d.priority,
+        dueDate: d.due_date,
+        executionDate: d.execution_date,
+        documentUrl: d.document_url,
+        fileName: d.file_name,
+        propertyId: p.id,
+        propertyName: p.property_name
+      }));
 
-      // Map Appraisals (from joined 'appraisals' array)
-      if (p.appraisals && Array.isArray(p.appraisals)) {
-        prop.appraisals = p.appraisals.map((a: any) => ({
-          appraisalDate: a.appraisal_date,
-          appraisedValue: a.appraised_value,
-          appraisalCompany: a.appraisal_company,
-          reportUrl: a.report_url,
-          reportFileName: a.report_file_name
-        }));
-      }
+      // Attach Appraisals
+      const myAppraisals = allAppraisals.filter((a: any) => a.property_id === p.id);
+      prop.appraisals = myAppraisals.map((a: any) => ({
+        appraisalDate: a.appraisal_date,
+        appraisedValue: a.appraised_value,
+        appraisalCompany: a.appraisal_company,
+        reportUrl: a.report_url,
+        reportFileName: a.report_file_name
+      }));
 
-      // Map Property Images (from joined 'property_images' array)
-      if (p.property_images && Array.isArray(p.property_images)) {
-        prop.images = p.property_images.map((img: any) => ({
-          id: img.id,
-          propertyId: img.property_id,
-          imageUrl: img.image_url,
-          caption: img.caption,
-          isPrimary: img.is_primary,
-          createdAt: img.created_at
-        }));
-      }
+      // Attach Images
+      const myImages = allImages.filter((img: any) => img.property_id === p.id);
+      prop.images = myImages.map((img: any) => ({
+        id: img.id,
+        propertyId: img.property_id,
+        imageUrl: img.image_url,
+        caption: img.caption,
+        isPrimary: img.is_primary,
+        createdAt: img.created_at
+      }));
 
       return prop;
     });

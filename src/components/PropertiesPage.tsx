@@ -34,18 +34,35 @@ export const PropertiesPage = ({ user, onLogout }: PropertiesPageProps) => {
   });
 
   useEffect(() => {
+    let isMounted = true;
     const loadProperties = async () => {
       setLoading(true);
       try {
+        console.log("PropertiesPage: Calling api.fetchProperties()...");
         const props = await api.fetchProperties();
-        setProperties(props);
+        console.log("PropertiesPage: Properties returned:", props);
+        if (isMounted) setProperties(props);
       } catch (error) {
-        console.error("Failed to load properties:", error);
+        console.error("PropertiesPage: Failed to load properties:", error);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
+
     loadProperties();
+
+    // Safety timeout: stop loading after 10 seconds if API hangs
+    const timeoutId = setTimeout(() => {
+      if (isMounted && loading) {
+        console.error("PropertiesPage: Loading timed out after 10s");
+        setLoading(false);
+      }
+    }, 10000);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

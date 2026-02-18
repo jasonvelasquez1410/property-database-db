@@ -286,15 +286,32 @@ export const api = {
     const propertyIds = properties.map((p: any) => p.id);
 
     // 2. Fetch Related Data in Parallel
-    const [docsResult, appraisalsResult, imagesResult] = await Promise.all([
-      supabase.from('documents').select('*').in('property_id', propertyIds),
-      supabase.from('appraisals').select('*').in('property_id', propertyIds),
-      supabase.from('property_images').select('*').in('property_id', propertyIds)
-    ]);
+    // We wrap this in try/catch so one failure doesn't kill the whole app
+    let allDocs: any[] = [];
+    let allAppraisals: any[] = [];
+    let allImages: any[] = [];
 
-    const allDocs = docsResult.data || [];
-    const allAppraisals = appraisalsResult.data || [];
-    const allImages = imagesResult.data || [];
+    try {
+      const [docsResult, appraisalsResult, imagesResult] = await Promise.all([
+        supabase.from('documents').select('*').in('property_id', propertyIds),
+        supabase.from('appraisals').select('*').in('property_id', propertyIds),
+        supabase.from('property_images').select('*').in('property_id', propertyIds)
+      ]);
+
+      if (docsResult.error) console.error("api.fetchProperties: Error fetching documents:", docsResult.error);
+      if (appraisalsResult.error) console.error("api.fetchProperties: Error fetching appraisals:", appraisalsResult.error);
+      if (imagesResult.error) console.error("api.fetchProperties: Error fetching images:", imagesResult.error);
+
+      allDocs = docsResult.data || [];
+      allAppraisals = appraisalsResult.data || [];
+      allImages = imagesResult.data || [];
+
+      console.log(`api.fetchProperties: Fetched ${allDocs.length} docs, ${allAppraisals.length} appraisals, ${allImages.length} images.`);
+
+    } catch (err) {
+      console.error("api.fetchProperties: CRITICAL ERROR fetching related data (partial load):", err);
+      // We continue with empty arrays for related data so the user at least sees the properties
+    }
 
     // 3. Map Data
     return properties.map((p: any) => {

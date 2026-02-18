@@ -265,9 +265,16 @@ export const api = {
   },
 
   fetchProperties: async (): Promise<Property[]> => {
+    // Optimization: Use a single joined query to fetch all related data in one go.
+    // This prevents N+1 query performance issues and hanging on slower connections/large datasets.
     const { data: properties, error } = await supabase
       .from('properties')
-      .select('*')
+      .select(`
+        *,
+        documents (*),
+        appraisals (*),
+        property_images (*)
+      `)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -275,15 +282,14 @@ export const api = {
       return [];
     }
 
-    // Fetch related data (Documents, Appraisals) for each property
-    // Optimization: Could use join query, but loop is simpler for now given small dataset
-    const fullProperties = await Promise.all(properties.map(async (p) => {
+    // Map the joined data to our Property interface
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return properties.map((p: any) => {
       const prop = mapRowToProperty(p);
 
-      // Fetch Documents
-      const { data: docs } = await supabase.from('documents').select('*').eq('property_id', p.id);
-      if (docs) {
-        prop.documentation.docs = docs.map((d: any) => ({
+      // Map Documents (from joined 'documents' array)
+      if (p.documents && Array.isArray(p.documents)) {
+        prop.documentation.docs = p.documents.map((d: any) => ({
           type: d.type,
           status: d.status,
           priority: d.priority,
@@ -296,10 +302,9 @@ export const api = {
         }));
       }
 
-      // Fetch Appraisals
-      const { data: appraisals } = await supabase.from('appraisals').select('*').eq('property_id', p.id);
-      if (appraisals) {
-        prop.appraisals = appraisals.map((a: any) => ({
+      // Map Appraisals (from joined 'appraisals' array)
+      if (p.appraisals && Array.isArray(p.appraisals)) {
+        prop.appraisals = p.appraisals.map((a: any) => ({
           appraisalDate: a.appraisal_date,
           appraisedValue: a.appraised_value,
           appraisalCompany: a.appraisal_company,
@@ -308,16 +313,9 @@ export const api = {
         }));
       }
 
-
-      // Fetch Gallery Images
-      const { data: images } = await supabase
-        .from('property_images')
-        .select('*')
-        .eq('property_id', p.id)
-        .order('created_at', { ascending: false });
-
-      if (images) {
-        prop.images = images.map((img: any) => ({
+      // Map Property Images (from joined 'property_images' array)
+      if (p.property_images && Array.isArray(p.property_images)) {
+        prop.images = p.property_images.map((img: any) => ({
           id: img.id,
           propertyId: img.property_id,
           imageUrl: img.image_url,
@@ -328,9 +326,7 @@ export const api = {
       }
 
       return prop;
-    }));
-
-    return fullProperties;
+    });
   },
 
   fetchRecentActivity: async (): Promise<RecentActivity[]> => {

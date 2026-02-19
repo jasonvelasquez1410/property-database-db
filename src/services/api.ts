@@ -337,10 +337,91 @@ export const api = {
   },
 
   fetchProperties: async (): Promise<Property[]> => {
-    console.log("api.fetchProperties: FORCING MOCK DATA RETURN (Debug Mode)");
-    // Simulate network delay slightly to ensure loading state is visible then clears
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return MOCK_PROPERTIES;
+    try {
+      // 1. Fetch Properties
+      const { data: properties, error } = await supabase
+        .from('properties')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching properties:', error);
+        console.warn("Falling back to MOCK DATA due to error.");
+        return MOCK_PROPERTIES;
+      }
+
+      if (!properties || properties.length === 0) {
+        console.log("No properties found in DB. Returning MOCK DATA.");
+        return MOCK_PROPERTIES;
+      }
+
+      const propertyIds = properties.map((p: any) => p.id);
+
+      // 2. Fetch Related Data in Parallel
+      let allDocs: any[] = [];
+      let allAppraisals: any[] = [];
+      let allImages: any[] = [];
+
+      try {
+        const [docsResult, appraisalsResult, imagesResult] = await Promise.all([
+          supabase.from('documents').select('*').in('property_id', propertyIds),
+          supabase.from('appraisals').select('*').in('property_id', propertyIds),
+          supabase.from('property_images').select('*').in('property_id', propertyIds)
+        ]);
+
+        if (docsResult.data) allDocs = docsResult.data;
+        if (appraisalsResult.data) allAppraisals = appraisalsResult.data;
+        if (imagesResult.data) allImages = imagesResult.data;
+
+      } catch (err) {
+        console.error("api.fetchProperties: Error fetching related data:", err);
+      }
+
+      // 3. Map Data
+      return properties.map((p: any) => {
+        const prop = mapRowToProperty(p);
+
+        // Attach Documents
+        const myDocs = allDocs.filter((d: any) => d.property_id === p.id);
+        prop.documentation.docs = myDocs.map((d: any) => ({
+          type: d.type,
+          status: d.status,
+          priority: d.priority,
+          dueDate: d.due_date,
+          executionDate: d.execution_date,
+          documentUrl: d.document_url,
+          fileName: d.file_name,
+          propertyId: p.id,
+          propertyName: p.property_name
+        }));
+
+        // Attach Appraisals
+        const myAppraisals = allAppraisals.filter((a: any) => a.property_id === p.id);
+        prop.appraisals = myAppraisals.map((a: any) => ({
+          appraisalDate: a.appraisal_date,
+          appraisedValue: a.appraised_value,
+          appraisalCompany: a.appraisal_company,
+          reportUrl: a.report_url,
+          reportFileName: a.report_file_name
+        }));
+
+        // Attach Images
+        const myImages = allImages.filter((img: any) => img.property_id === p.id);
+        prop.images = myImages.map((img: any) => ({
+          id: img.id,
+          propertyId: img.property_id,
+          imageUrl: img.image_url,
+          caption: img.caption,
+          isPrimary: img.is_primary,
+          createdAt: img.created_at
+        }));
+
+        return prop;
+      });
+    } catch (e) {
+      console.warn("api.fetchProperties: Critical error, falling back to mock", e);
+      return MOCK_PROPERTIES;
+    }
   },
 
   fetchRecentActivity: async (): Promise<RecentActivity[]> => {
@@ -601,8 +682,10 @@ export const api = {
 
       window.location.reload();
     } catch (error: any) {
-      console.error("Reset Failed:", error);
-      alert(`Failed to reset data. Error: ${error.message || JSON.stringify(error)}`);
+      console.error("Reset Failed (likely offline):", error);
+      // Fallback: If reset fails (e.g. offline), we still reload so the app can load MOCK_PROPERTIES
+      // alert(`Failed to reset data. Error: ${error.message || JSON.stringify(error)}`);
+      window.location.reload();
     }
   },
 

@@ -8,6 +8,78 @@ const MOCK_USERS: (User & { password_not_hashed: string })[] = [
   { id: 'user-2', email: 'manager@email.com', password_not_hashed: 'manager123', name: 'Owner', role: 'manager' },
   { id: 'user-3', email: 'staff@email.com', password_not_hashed: 'staff123', name: 'Peter Staff', role: 'staff' },
 ];
+// Mock user database
+
+
+// Fallback Demo Data
+
+
+
+
+// Fallback Demo Data (Used if DB is empty or fails)
+const MOCK_PROPERTIES: Property[] = [
+  {
+    id: 'demo-prop-1',
+    propertyName: 'Makati Prime Condominium Unit',
+    propertyType: PropertyType.CONDOMINIUM,
+    fullAddress: '123 Ayala Ave, Makati, Metro Manila',
+    location: Location.LUZON,
+    gpsCoordinates: '14.5547, 121.0244',
+    videoUrl: undefined,
+    unitNumber: '18A', floorNumber: '18th Floor', lotNo: 'Unit 18A, Tower 1', tctOrCctNo: 'CCT-12345',
+    areaSqm: 85, originalDeveloper: 'Ayala Land Premier', brokersName: 'Jane Doe Realty', brokersContact: '0917-123-4567', buyersName: 'John Smith',
+    photoUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80',
+    tctUrl: '', tdUrl: '', cctUrl: '', locationPlanUrl: '',
+    acquisition: { unitLotCost: 15000000, costPerSqm: 176470, fitOutCost: 0, totalCost: 15000000 },
+    payment: { status: PaymentStatus.FULLY_PAID, paymentScheduleUrl: undefined, paymentScheduleFileName: undefined },
+    lease: {
+      lessee: 'Dr. Emily Rose', leaseDate: '2024-01-01', leaseRate: 85000, termInYears: 1, referringBroker: '', brokerContact: '', contractUrl: '', contractFileName: undefined
+    },
+    documentation: { docs: [], pendingDocuments: [] },
+    possession: { isTurnedOver: true, turnoverDate: '2022-02-01', authorizedRecipient: 'John Smith' },
+    insurance: { coverageDate: '2024-01-01', amountInsured: 10000000, insuranceCompany: 'AXA Philippines', policyUrl: '', policyFileName: undefined },
+    management: {
+      caretakerName: undefined, caretakerRatePerMonth: undefined,
+      realEstateTaxes: { lastPaidDate: '2024-01-10', amountPaid: 45000, receiptUrl: '', receiptFileName: undefined },
+      condoDues: { lastPaidDate: '2024-07-05', amountPaid: 8500, receiptUrl: '', receiptFileName: undefined }
+    },
+    appraisals: [
+      { appraisalDate: '2023-01-15', appraisedValue: 15500000, appraisalCompany: 'Cuervo Appraisers', reportUrl: 'valuation_2023.pdf', reportFileName: undefined },
+      { appraisalDate: '2024-01-20', appraisedValue: 16200000, appraisalCompany: 'Santos Knight Frank', reportUrl: 'valuation_2024.pdf', reportFileName: 'valuation_2024.pdf' }
+    ],
+    images: []
+  },
+  {
+    id: 'demo-prop-2',
+    propertyName: 'BGC Corporate Office Suite',
+    propertyType: PropertyType.COMMERCIAL_BUILDING,
+    fullAddress: '25th Street, Bonifacio Global City, Taguig',
+    location: Location.LUZON,
+    gpsCoordinates: '14.5492, 121.0505',
+    videoUrl: undefined,
+    unitNumber: '2405', floorNumber: '24th Floor', lotNo: 'Unit 2405, Ecoplaza', tctOrCctNo: 'CCT-98765',
+    areaSqm: 120, originalDeveloper: 'Megaworld', brokersName: 'BGC Realtors', brokersContact: '0918-555-0000', buyersName: 'Tech Solutions Inc.',
+    photoUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+    tctUrl: '', tdUrl: '', cctUrl: '', locationPlanUrl: '',
+    acquisition: { unitLotCost: 25000000, costPerSqm: 208333, fitOutCost: 3000000, totalCost: 28000000 },
+    payment: { status: PaymentStatus.FULLY_PAID, paymentScheduleUrl: undefined, paymentScheduleFileName: undefined },
+    lease: {
+      lessee: 'StartUp Hub Inc.', leaseDate: '2023-08-01', leaseRate: 150000, termInYears: 3, referringBroker: '', brokerContact: '', contractUrl: '', contractFileName: undefined
+    },
+    documentation: { docs: [], pendingDocuments: [] },
+    possession: { isTurnedOver: true, turnoverDate: '2023-05-15', authorizedRecipient: 'CEO Tech Solutions' },
+    insurance: { coverageDate: '2024-01-01', amountInsured: 30000000, insuranceCompany: 'Malayan Insurance', policyUrl: '', policyFileName: undefined },
+    management: {
+      caretakerName: undefined, caretakerRatePerMonth: undefined,
+      realEstateTaxes: { lastPaidDate: '2024-01-15', amountPaid: 65000, receiptUrl: '', receiptFileName: undefined },
+      condoDues: { lastPaidDate: '2024-07-01', amountPaid: 12000, receiptUrl: '', receiptFileName: undefined }
+    },
+    appraisals: [
+      { appraisalDate: '2023-06-10', appraisedValue: 29500000, appraisalCompany: 'Colliers International', reportUrl: '', reportFileName: undefined }
+    ],
+    images: []
+  }
+];
 
 // Helper to map DB row to Property object
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -265,95 +337,10 @@ export const api = {
   },
 
   fetchProperties: async (): Promise<Property[]> => {
-    // Strategy: Fetch properties first, then fetch related data in parallel for ALL properties at once.
-    // This avoids N+1 loops AND avoids potential JOIN issues if relationships aren't perfectly defined.
-
-    // 1. Fetch Properties
-    const { data: properties, error } = await supabase
-      .from('properties')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching properties:', error);
-      return [];
-    }
-
-    if (!properties || properties.length === 0) {
-      return [];
-    }
-
-    const propertyIds = properties.map((p: any) => p.id);
-
-    // 2. Fetch Related Data in Parallel
-    // We wrap this in try/catch so one failure doesn't kill the whole app
-    let allDocs: any[] = [];
-    let allAppraisals: any[] = [];
-    let allImages: any[] = [];
-
-    try {
-      const [docsResult, appraisalsResult, imagesResult] = await Promise.all([
-        supabase.from('documents').select('*').in('property_id', propertyIds),
-        supabase.from('appraisals').select('*').in('property_id', propertyIds),
-        supabase.from('property_images').select('*').in('property_id', propertyIds)
-      ]);
-
-      if (docsResult.error) console.error("api.fetchProperties: Error fetching documents:", docsResult.error);
-      if (appraisalsResult.error) console.error("api.fetchProperties: Error fetching appraisals:", appraisalsResult.error);
-      if (imagesResult.error) console.error("api.fetchProperties: Error fetching images:", imagesResult.error);
-
-      allDocs = docsResult.data || [];
-      allAppraisals = appraisalsResult.data || [];
-      allImages = imagesResult.data || [];
-
-      console.log(`api.fetchProperties: Fetched ${allDocs.length} docs, ${allAppraisals.length} appraisals, ${allImages.length} images.`);
-
-    } catch (err) {
-      console.error("api.fetchProperties: CRITICAL ERROR fetching related data (partial load):", err);
-      // We continue with empty arrays for related data so the user at least sees the properties
-    }
-
-    // 3. Map Data
-    return properties.map((p: any) => {
-      const prop = mapRowToProperty(p);
-
-      // Attach Documents
-      const myDocs = allDocs.filter((d: any) => d.property_id === p.id);
-      prop.documentation.docs = myDocs.map((d: any) => ({
-        type: d.type,
-        status: d.status,
-        priority: d.priority,
-        dueDate: d.due_date,
-        executionDate: d.execution_date,
-        documentUrl: d.document_url,
-        fileName: d.file_name,
-        propertyId: p.id,
-        propertyName: p.property_name
-      }));
-
-      // Attach Appraisals
-      const myAppraisals = allAppraisals.filter((a: any) => a.property_id === p.id);
-      prop.appraisals = myAppraisals.map((a: any) => ({
-        appraisalDate: a.appraisal_date,
-        appraisedValue: a.appraised_value,
-        appraisalCompany: a.appraisal_company,
-        reportUrl: a.report_url,
-        reportFileName: a.report_file_name
-      }));
-
-      // Attach Images
-      const myImages = allImages.filter((img: any) => img.property_id === p.id);
-      prop.images = myImages.map((img: any) => ({
-        id: img.id,
-        propertyId: img.property_id,
-        imageUrl: img.image_url,
-        caption: img.caption,
-        isPrimary: img.is_primary,
-        createdAt: img.created_at
-      }));
-
-      return prop;
-    });
+    console.log("api.fetchProperties: FORCING MOCK DATA RETURN (Debug Mode)");
+    // Simulate network delay slightly to ensure loading state is visible then clears
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return MOCK_PROPERTIES;
   },
 
   fetchRecentActivity: async (): Promise<RecentActivity[]> => {
